@@ -1,0 +1,18 @@
+@model GenericHerdFormViewModel<VaccineRecord>
+@{
+    ViewData["Title"] = "Thêm lịch tiêm phòng";
+}
+<article class="panel form-card">
+<form asp-action="Create" method="post">
+<div asp-validation-summary="ModelOnly"></div>
+<div class="form-grid">
+<div class="field"><label asp-for="Item.HerdId"></label><select asp-for="Item.HerdId" asp-items="Model.Herds"><option value="">-- Chọn đàn --</option></select></div>
+<div class="field"><label asp-for="Item.VaccineName"></label><input asp-for="Item.VaccineName" /></div>
+<div class="field"><label asp-for="Item.ScheduledDate"></label><input asp-for="Item.ScheduledDate" /></div>
+<div class="field"><label asp-for="Item.CompletedDate"></label><input asp-for="Item.CompletedDate" /></div>
+<div class="field full"><label asp-for="Item.Notes"></label><textarea asp-for="Item.Notes"></textarea></div>
+</div>
+<div class="notice warning" style="margin-top:18px">Trạng thái sẽ tự động xác định theo ngày dự kiến và ngày thực hiện.</div>
+<div class="form-actions"><button class="btn btn-primary">Lưu lịch</button><a class="btn btn-outline" asp-action="Index">Hủy</a></div>
+</form>
+</article>

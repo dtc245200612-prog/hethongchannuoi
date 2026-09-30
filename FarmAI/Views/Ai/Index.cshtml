@@ -1,0 +1,104 @@
+@model AiPageViewModel
+@{
+    ViewData["Title"] = "Trợ lý AI";
+}
+<div class="page-toolbar">
+    <div><p class="eyebrow">AI TÍCH HỢP NGHIỆP VỤ</p><h3>Phân tích dữ liệu trang trại</h3></div>
+    <div class="page-actions">
+        <a class="btn btn-ghost" asp-action="PromptLab">🧪 Thử Prompt V1/V2/V3</a>
+        <div class="ai-status"><span class="dot @(Model.ExternalAiConfigured ? "on" : "")"></span><span>@(Model.ExternalAiConfigured ? "OpenAI API đã cấu hình" : "Chưa có API key · dùng fallback nội bộ")</span><span class="pill">Prompt @Model.PromptVersion</span></div>
+    </div>
+</div>
+
+<div class="grid-2 ai-grid">
+    <article class="panel">
+        <h3>Yêu cầu AI</h3>
+        <p class="muted">Dữ liệu được lấy trực tiếp từ SQLite. Chỉ Quản lý và Kỹ thuật viên có quyền gửi dữ liệu sang AI.</p>
+        <form id="ai-analysis-form" asp-action="Analyze" method="post" data-ai-endpoint="/api/ai/summarize-herd" style="display:grid;gap:16px;margin-top:18px">
+            <div asp-validation-summary="ModelOnly"></div>
+            <div class="field">
+                <label asp-for="Task"></label>
+                <select asp-for="Task" id="ai-task">
+                    <option value="summary">Tóm tắt tình trạng đàn</option>
+                    <option value="schedule">Nhắc lịch chăm sóc & tiêm phòng 7 ngày</option>
+                    <option value="growth">Phân tích xu hướng tăng trưởng</option>
+                    <option value="risk">Điểm cần theo dõi</option>
+                </select>
+            </div>
+            <div class="field">
+                <label asp-for="Question"></label>
+                <textarea asp-for="Question" id="ai-question" rows="5" placeholder="Ví dụ: Hãy ưu tiên các việc cần xử lý trong tuần này."></textarea>
+                <span asp-validation-for="Question"></span>
+            </div>
+            <button id="ai-submit" class="btn btn-primary" type="submit">
+                <span class="ai-submit-label">✨ Phân tích dữ liệu</span>
+                <span class="ai-submit-loading" hidden><span class="ai-spinner" aria-hidden="true"></span> Đang phân tích...</span>
+            </button>
+            <div id="ai-request-status" class="ai-request-status" role="status" aria-live="polite">
+                Khi bấm phân tích, trang vẫn sử dụng bình thường trong lúc chờ OpenAI.
+            </div>
+        </form>
+        <div class="ai-disclaimer">⚠ Khuyến cáo: Kết quả do AI tạo ra chỉ mang tính chất tham khảo, không thay thế cho chỉ định của bác sĩ thú y.</div>
+    </article>
+
+    <article class="panel">
+        <div class="panel-head"><h3>Kết quả AI</h3><span class="pill pill-ai">Guardrail bật</span></div>
+        <div id="ai-result-panel">
+            @if (Model.Result is null)
+            {
+                <div class="empty-state">Chọn loại phân tích và nhấn “Phân tích dữ liệu”.</div>
+            }
+            else
+            {
+                <div class="ai-result-card">
+                    <div><span class="pill">@Model.Result.Provider</span></div>
+                    <div><h4>@Model.Result.Title</h4><p>@Model.Result.Summary</p></div>
+                    @if (Model.Result.Highlights.Count > 0)
+                    {
+                        <div><h4>Điểm đáng chú ý</h4><ul>@foreach (var x in Model.Result.Highlights) { <li>@x</li> }</ul></div>
+                    }
+                    @if (Model.Result.Reminders.Count > 0)
+                    {
+                        <div><h4>Nhắc việc</h4><ul>@foreach (var x in Model.Result.Reminders) { <li>@x</li> }</ul></div>
+                    }
+                    @if (Model.Result.Warnings.Count > 0)
+                    {
+                        <div><h4>Cần theo dõi</h4><ul>@foreach (var x in Model.Result.Warnings) { <li>@x</li> }</ul></div>
+                    }
+                    <div class="ai-disclaimer">Khuyến cáo: Kết quả do AI tạo ra chỉ mang tính chất tham khảo, không thay thế cho chỉ định của bác sĩ thú y.</div>
+                </div>
+            }
+        </div>
+    </article>
+</div>
+
+<article class="panel" style="margin-top:26px">
+    <div class="panel-head">
+        <div><p class="eyebrow">MINH CHỨNG KT3</p><h3>Nhật ký prompt / phản hồi</h3></div>
+        @if (User.IsInRole(RoleNames.Manager))
+        {
+            <form asp-action="ClearLogs" method="post"><button class="btn btn-ghost" type="submit" data-confirm="Xóa toàn bộ nhật ký AI?">Xóa nhật ký</button></form>
+        }
+    </div>
+    <p class="muted" id="ai-log-hint">Nhật ký được ghi tự động sau mỗi lần phân tích. Tải lại trang để xem bản ghi mới nhất.</p>
+    @if (Model.Logs.Count == 0)
+    {
+        <div class="empty-state">Chưa có nhật ký AI. Hãy chạy một lần phân tích để hệ thống ghi minh chứng.</div>
+    }
+    else
+    {
+        <div class="table-wrap"><table class="data-table log-table">
+            <thead><tr><th>Thời gian</th><th>Người dùng</th><th>Tác vụ</th><th>Yêu cầu</th><th>Model / provider</th><th>Trạng thái</th></tr></thead>
+            <tbody>
+            @foreach (var x in Model.Logs)
+            {
+                <tr><td>@x.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td><td>@x.AppUser?.FullName</td><td>@x.Task</td><td>@(string.IsNullOrWhiteSpace(x.Question) ? "(không có)" : x.Question)</td><td>@x.Provider</td><td><span class="status @(x.Success ? "ok" : "danger")">@(x.Success ? "Đã xử lý" : "Lỗi")</span></td></tr>
+            }
+            </tbody>
+        </table></div>
+    }
+</article>
+
+<div class="notice" style="margin-top:20px">
+    <strong>Cách đáp ứng KT3:</strong> prompt được tách khỏi code trong thư mục <code>Prompts/</code>; dữ liệu AI lấy từ CSDL; API key đọc từ user-secrets/biến môi trường; có giới hạn dữ liệu, timeout, xử lý HTTP 401/403/429, response rỗng/sai JSON và fallback. Ba vòng thử prompt được ghi trong <code>docs/PROMPT_EXPERIMENTS.md</code>.
+</div>

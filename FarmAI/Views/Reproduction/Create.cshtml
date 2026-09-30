@@ -1,0 +1,12 @@
+@model GenericHerdFormViewModel<ReproductionRecord>
+@{ ViewData["Title"] = "Ghi nhận sinh sản"; }
+<article class="panel form-card"><form asp-action="Create" method="post">
+<div asp-validation-summary="ModelOnly"></div><div class="form-grid">
+<div class="field"><label asp-for="Item.HerdId"></label><select asp-for="Item.HerdId" asp-items="Model.Herds"><option value="">-- Chọn đàn --</option></select></div>
+<div class="field"><label asp-for="Item.EventType"></label><select asp-for="Item.EventType"><option>Phối giống</option><option>Kiểm tra thai</option><option>Sinh con</option><option>Cai sữa</option><option>Khác</option></select></div>
+<div class="field"><label asp-for="Item.Date"></label><input asp-for="Item.Date" /></div>
+<div class="field"><label asp-for="Item.NextExpectedDate"></label><input asp-for="Item.NextExpectedDate" /></div>
+<div class="field full"><label asp-for="Item.Result"></label><input asp-for="Item.Result" /></div>
+<div class="field full"><label asp-for="Item.Notes"></label><textarea asp-for="Item.Notes"></textarea></div>
+</div><div class="form-actions"><button class="btn btn-primary">Lưu sự kiện</button><a class="btn btn-outline" asp-action="Index">Hủy</a></div>
+</form></article>

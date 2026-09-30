@@ -1,0 +1,126 @@
+@model DashboardViewModel
+@using System.Text.Json
+@{
+    ViewData["Title"] = "Tổng quan trang trại";
+    var growthRows = Model.Growth.Select(x => new
+    {
+        label = x.RecordedDate.ToString("d/M"),
+        value = x.AverageWeight
+    });
+    var growthJson = JsonSerializer.Serialize(growthRows);
+    var today = DateTime.Today;
+}
+
+<section class="view active">
+    <div class="stats-grid">
+        <article class="stat-card">
+            <div class="stat-icon">🐄</div>
+            <div class="value">@Model.HerdCount</div>
+            <small>Đàn đang nuôi • nhóm vật nuôi</small>
+        </article>
+        <article class="stat-card">
+            <div class="stat-icon">🔢</div>
+            <div class="value">@Model.AnimalCount.ToString("N0", new System.Globalization.CultureInfo("vi-VN"))</div>
+            <small>Tổng số vật nuôi • con</small>
+        </article>
+        <article class="stat-card">
+            <div class="stat-icon">⚠️</div>
+            <div class="value">@Model.OverdueVaccineCount</div>
+            <small>Lịch tiêm quá hạn • cần xử lý</small>
+        </article>
+        <article class="stat-card">
+            <div class="stat-icon">💰</div>
+            <div class="value">@((Model.Revenue / 1_000_000m).ToString("0.0")) triệu</div>
+            <small>Doanh thu ghi nhận • đồng</small>
+        </article>
+    </div>
+
+    <div class="grid-2 dashboard-primary-grid">
+        <article class="panel">
+            <div class="panel-head">
+                <div><p class="eyebrow">LỊCH 7 NGÀY</p><h3>Cảnh báo tiêm phòng</h3></div>
+                <span class="pill pill-warning">Ưu tiên</span>
+            </div>
+            @if (Model.Vaccines.Count == 0)
+            {
+                <div class="empty-state">Không có lịch tiêm chưa hoàn thành.</div>
+            }
+            else
+            {
+                <div class="list">
+                    @foreach (var v in Model.Vaccines)
+                    {
+                        var days = (v.ScheduledDate.Date - today).Days;
+                        var css = days < 0 ? "danger" : days <= 7 ? "warn" : "info";
+                        var label = days < 0 ? "Quá hạn" : days == 0 ? "Hôm nay" : days <= 7 ? "Sắp đến hạn" : "Đã lên lịch";
+                        <div class="list-row">
+                            <div>
+                                <strong>@v.VaccineName • @v.Herd?.Code</strong><br />
+                                <small>@v.ScheduledDate.ToString("d/M/yyyy") • @(days < 0 ? $"quá {Math.Abs(days)} ngày" : days == 0 ? "thực hiện hôm nay" : $"còn {days} ngày")</small>
+                            </div>
+                            <span class="status @css">@label</span>
+                        </div>
+                    }
+                </div>
+            }
+        </article>
+
+        <article class="panel chart-card">
+            <div class="panel-head">
+                <div><p class="eyebrow">THEO DÕI</p><h3>Tăng trưởng gần đây</h3></div>
+                <span class="pill">kg/con</span>
+            </div>
+            <canvas id="dashboardGrowthChart" aria-label="Biểu đồ tăng trưởng"></canvas>
+        </article>
+    </div>
+
+    <div class="grid-2 dashboard-secondary-grid">
+        <article class="panel">
+            <div class="panel-head"><div><p class="eyebrow">HOẠT ĐỘNG</p><h3>Nhật ký chăm sóc mới nhất</h3></div></div>
+            @if (Model.RecentCare.Count == 0)
+            {
+                <div class="empty-state">Chưa có nhật ký chăm sóc.</div>
+            }
+            else
+            {
+                <div class="list">
+                    @foreach (var item in Model.RecentCare)
+                    {
+                        <div class="list-row">
+                            <div>
+                                <strong>@item.Type • @item.Herd?.Code</strong><br />
+                                <small>@item.Description</small>
+                            </div>
+                            <small>@item.Date.ToString("d/M")</small>
+                        </div>
+                    }
+                </div>
+            }
+        </article>
+
+        <article class="panel ai-card">
+            <div class="panel-head">
+                <div><p class="eyebrow">AI HỖ TRỢ</p><h3>Tóm tắt tình trạng trang trại</h3></div>
+                <span class="pill pill-ai">AI</span>
+            </div>
+            <p class="ai-summary">
+                Hệ thống đang quản lý <strong>@Model.AnimalCount</strong> vật nuôi trong <strong>@Model.HerdCount</strong> đàn.
+                Có <strong>@Model.OverdueVaccineCount</strong> lịch vaccine quá hạn, <strong>@Model.LowStockCount</strong> loại thức ăn ở/ngang ngưỡng tối thiểu và <strong>@Model.HealthCheckCount</strong> nhật ký gần đây cần kiểm tra sức khỏe.
+            </p>
+            @if (User.IsInRole(RoleNames.Manager) || User.IsInRole(RoleNames.Technician))
+            {
+                <a class="btn btn-primary" asp-controller="Ai" asp-action="Index">Phân tích chi tiết bằng AI</a>
+            }
+            else
+            {
+                <div class="notice">Tài khoản Nhân viên có thể cập nhật nghiệp vụ. Quyền gửi dữ liệu sang AI chỉ dành cho Quản lý và Kỹ thuật viên.</div>
+            }
+        </article>
+    </div>
+</section>
+
+@section Scripts {
+<script>
+    FarmCharts.line(document.getElementById('dashboardGrowthChart'), @Html.Raw(growthJson));
+</script>
+}

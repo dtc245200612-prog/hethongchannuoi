@@ -1,0 +1,101 @@
+@using System.Security.Claims
+@{
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString() ?? "Dashboard";
+    var pageTitle = ViewData["Title"]?.ToString() ?? "FarmAI ICTU";
+    var role = User.FindFirstValue(ClaimTypes.Role) ?? RoleNames.Employee;
+    var roleVi = RoleNames.ToVietnamese(role);
+    var fullName = User.Identity?.Name ?? "Người dùng";
+    var initials = string.Concat(fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).TakeLast(2).Select(x => char.ToUpperInvariant(x[0])));
+    string Active(string name) => string.Equals(controller, name, StringComparison.OrdinalIgnoreCase) ? "active" : "";
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="FarmAI ICTU - Hệ thống quản lý chăn nuôi tích hợp AI" />
+    <title>@pageTitle | FarmAI ICTU</title>
+    <link rel="icon" type="image/png" href="~/assets/logo-ictu.png" />
+    <link rel="stylesheet" href="~/css/app.css" asp-append-version="true" />
+</head>
+<body>
+    <div class="app">
+        <aside class="sidebar">
+            <div class="brand">
+                <img src="~/assets/logo-ictu.png" alt="Logo ICTU" />
+                <div><strong>FarmAI</strong><small>ICTU • AIA331</small></div>
+            </div>
+            <nav class="nav">
+                <a class="nav-item @Active("Dashboard")" asp-controller="Dashboard" asp-action="Index"><span>▦</span>Tổng quan</a>
+                <a class="nav-item @Active("Herds")" asp-controller="Herds" asp-action="Index"><span>🐄</span>Đàn vật nuôi</a>
+                <a class="nav-item @Active("Barns")" asp-controller="Barns" asp-action="Index"><span>▤</span>Chuồng trại</a>
+                <a class="nav-item @Active("CareLogs")" asp-controller="CareLogs" asp-action="Index"><span>📝</span>Nhật ký chăm sóc</a>
+                <a class="nav-item @Active("Vaccines")" asp-controller="Vaccines" asp-action="Index"><span>💉</span>Tiêm phòng</a>
+                <a class="nav-item @Active("Growth")" asp-controller="Growth" asp-action="Index"><span>📈</span>Tăng trưởng</a>
+                <a class="nav-item @Active("Feed")" asp-controller="Feed" asp-action="Index"><span>🌾</span>Thức ăn & kho</a>
+                <a class="nav-item @Active("Reproduction")" asp-controller="Reproduction" asp-action="Index"><span>🧬</span>Sinh sản</a>
+                <a class="nav-item @Active("Sales")" asp-controller="Sales" asp-action="Index"><span>💰</span>Xuất bán & doanh thu</a>
+                @if (User.IsInRole(RoleNames.Manager))
+                {
+                    <a class="nav-item @Active("Expenses")" asp-controller="Expenses" asp-action="Index"><span>🧾</span>Chi phí</a>
+                }
+                @if (User.IsInRole(RoleNames.Manager) || User.IsInRole(RoleNames.Technician))
+                {
+                    <a class="nav-item @Active("Reports")" asp-controller="Reports" asp-action="Index"><span>📊</span>Báo cáo</a>
+                    <a class="nav-item ai-nav @Active("Ai")" asp-controller="Ai" asp-action="Index"><span>✨</span>Trợ lý AI</a>
+                }
+                @if (User.IsInRole(RoleNames.Manager))
+                {
+                    <a class="nav-item @Active("Users")" asp-controller="Users" asp-action="Index"><span>👥</span>Tài khoản</a>
+                }
+            </nav>
+            <div class="sidebar-footer">
+                @if (User.IsInRole(RoleNames.Manager))
+                {
+                    <form asp-controller="Dashboard" asp-action="ResetDemo" method="post">
+                        <button class="btn btn-ghost btn-block" type="submit" data-confirm="Khôi phục dữ liệu mẫu sẽ xóa toàn bộ dữ liệu hiện tại. Tiếp tục?">Khôi phục dữ liệu mẫu</button>
+                    </form>
+                }
+                <small>ASP.NET Core MVC • .NET 10</small>
+                <small>FarmAI ICTU • 2026</small>
+            </div>
+        </aside>
+        <div class="sidebar-backdrop"></div>
+
+        <main class="main">
+            <header class="topbar">
+                <div class="topbar-title">
+                    <button class="btn btn-ghost mobile-menu" type="button" data-menu-toggle>☰</button>
+                    <div>
+                        <p class="eyebrow">HỆ THỐNG QUẢN LÝ CHĂN NUÔI TÍCH HỢP AI</p>
+                        <h2>@pageTitle</h2>
+                    </div>
+                </div>
+                <div class="user-box">
+                    <div class="avatar">@initials</div>
+                    <div><strong>@fullName</strong><small>@roleVi</small></div>
+                    <form asp-controller="Account" asp-action="Logout" method="post">
+                        <button class="btn btn-ghost" type="submit">Đăng xuất</button>
+                    </form>
+                </div>
+            </header>
+
+            @if (TempData["Success"] is string success)
+            {
+                <div class="alert alert-success">@success</div>
+            }
+            @if (TempData["Error"] is string error)
+            {
+                <div class="alert alert-danger">@error</div>
+            }
+
+            <div class="content-shell">
+                @RenderBody()
+            </div>
+        </main>
+    </div>
+
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

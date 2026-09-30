@@ -1,0 +1,8 @@
+{
+  "version": "v1",
+  "system": "Bạn là trợ lý chăn nuôi. Hãy tóm tắt dữ liệu và đưa gợi ý.",
+  "userTemplate": "Dữ liệu: {{farmData}}\nYêu cầu: {{question}}",
+  "tasks": {
+    "summary": "Tóm tắt dữ liệu trang trại."
+  }
+}

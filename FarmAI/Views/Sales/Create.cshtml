@@ -1,0 +1,14 @@
+@model GenericHerdFormViewModel<SaleRecord>
+@{ ViewData["Title"] = "Ghi nhận xuất bán"; }
+<article class="panel form-card"><form asp-action="Create" method="post">
+<div asp-validation-summary="ModelOnly"></div><div class="form-grid">
+<div class="field"><label asp-for="Item.HerdId"></label><select asp-for="Item.HerdId" asp-items="Model.Herds"><option value="">-- Chọn đàn --</option></select></div>
+<div class="field"><label asp-for="Item.Date"></label><input asp-for="Item.Date" /></div>
+<div class="field"><label asp-for="Item.Quantity"></label><input asp-for="Item.Quantity" /></div>
+<div class="field"><label asp-for="Item.AverageWeight"></label><input asp-for="Item.AverageWeight" step="0.01" /></div>
+<div class="field"><label asp-for="Item.UnitPrice"></label><input asp-for="Item.UnitPrice" step="1" /></div>
+<div class="field"><label asp-for="Item.Buyer"></label><input asp-for="Item.Buyer" /></div>
+</div>
+<div class="notice" style="margin-top:18px">Khi lưu giao dịch, hệ thống tự trừ số lượng xuất bán khỏi đàn. Nếu Quản lý xóa giao dịch, số lượng sẽ được hoàn lại.</div>
+<div class="form-actions"><button class="btn btn-primary">Lưu giao dịch</button><a class="btn btn-outline" asp-action="Index">Hủy</a></div>
+</form></article>

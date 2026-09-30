@@ -1,0 +1,14 @@
+@model FeedTransactionViewModel
+@{ ViewData["Title"] = "Nhập / xuất thức ăn"; }
+<article class="panel form-card"><form asp-action="Transaction" method="post">
+<div asp-validation-summary="ModelOnly"></div>
+<div class="form-grid">
+<div class="field"><label asp-for="FeedItemId"></label><select asp-for="FeedItemId" asp-items="Model.FeedItems"><option value="">-- Chọn thức ăn --</option></select></div>
+<div class="field"><label asp-for="HerdId"></label><select asp-for="HerdId" asp-items="Model.Herds"><option value="">-- Không gắn đàn / nhập kho --</option></select></div>
+<div class="field"><label asp-for="Date"></label><input asp-for="Date" /></div>
+<div class="field"><label asp-for="TransactionType"></label><select asp-for="TransactionType"><option>Xuất</option><option>Nhập</option></select></div>
+<div class="field"><label asp-for="Quantity"></label><input asp-for="Quantity" step="0.1" /></div>
+<div class="field full"><label asp-for="Notes"></label><textarea asp-for="Notes"></textarea></div>
+</div>
+<div class="form-actions"><button class="btn btn-primary">Lưu giao dịch</button><a class="btn btn-outline" asp-action="Index">Hủy</a></div>
+</form></article>

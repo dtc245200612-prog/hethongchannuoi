@@ -1,0 +1,19 @@
+@model Barn
+@{
+    ViewData["Title"] = "Thêm chuồng trại";
+}
+<article class="panel form-card">
+<form asp-action="Create" method="post">
+<div asp-validation-summary="ModelOnly"></div>
+<div class="form-grid">
+<div class="field"><label asp-for="Code"></label><input asp-for="Code" /><span asp-validation-for="Code"></span></div>
+<div class="field"><label asp-for="Name"></label><input asp-for="Name" /><span asp-validation-for="Name"></span></div>
+<div class="field"><label asp-for="Capacity"></label><input asp-for="Capacity" /></div>
+<div class="field"><label asp-for="Temperature"></label><input asp-for="Temperature" step="0.1" /></div>
+<div class="field"><label asp-for="Humidity"></label><input asp-for="Humidity" /></div>
+<div class="field"><label asp-for="Status"></label><select asp-for="Status"><option>Tốt</option><option>Cần theo dõi</option><option>Bảo trì</option></select></div>
+<div class="field full"><label asp-for="Notes"></label><textarea asp-for="Notes"></textarea></div>
+</div>
+<div class="form-actions"><button class="btn btn-primary">Lưu chuồng</button><a class="btn btn-outline" asp-action="Index">Hủy</a></div>
+</form>
+</article>

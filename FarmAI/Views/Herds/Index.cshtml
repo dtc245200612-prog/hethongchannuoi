@@ -1,0 +1,52 @@
+@model List<Herd>
+@{
+    ViewData["Title"] = "Quản lý đàn vật nuôi";
+}
+<div class="page-toolbar">
+    <div><p class="eyebrow">QUẢN LÝ DỮ LIỆU</p><h3>Danh sách đàn vật nuôi</h3></div>
+    <div class="page-actions">
+        <form method="get" class="search-form">
+            <input name="q" value="@ViewBag.Query" placeholder="Tìm mã, tên hoặc loài..." />
+            <button class="btn btn-outline" type="submit">Tìm</button>
+        </form>
+        @if (User.IsInRole(RoleNames.Manager) || User.IsInRole(RoleNames.Technician))
+        {
+            <a class="btn btn-primary" asp-action="Create">+ Thêm đàn</a>
+        }
+    </div>
+</div>
+<article class="panel">
+    <div class="table-wrap">
+        <table class="data-table">
+            <thead><tr><th>Mã</th><th>Tên đàn</th><th>Loài / giống</th><th>Chuồng</th><th>Số lượng</th><th>Hao hụt</th><th>Trạng thái</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var x in Model)
+            {
+                <tr>
+                    <td><strong>@x.Code</strong></td>
+                    <td>@x.Name</td>
+                    <td>@x.Species<br/><span class="muted">@x.Breed</span></td>
+                    <td>@x.Barn?.Name</td>
+                    <td>@x.Quantity.ToString("N0")</td>
+                    <td>@x.MortalityCount</td>
+                    <td><span class="status @(x.Status == "Ổn định" ? "ok" : "warn")">@x.Status</span></td>
+                    <td>
+                        <div class="row-actions">
+                            @if (User.IsInRole(RoleNames.Manager) || User.IsInRole(RoleNames.Technician))
+                            {
+                                <a class="btn btn-outline btn-sm" asp-action="Edit" asp-route-id="@x.Id">Sửa</a>
+                            }
+                            @if (User.IsInRole(RoleNames.Manager))
+                            {
+                                <form asp-action="Delete" asp-route-id="@x.Id" method="post">
+                                    <button class="btn btn-danger btn-sm" type="submit" data-confirm="Xóa đàn này sẽ xóa cả nhật ký/vaccine/tăng trưởng liên quan. Tiếp tục?">Xóa</button>
+                                </form>
+                            }
+                        </div>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</article>

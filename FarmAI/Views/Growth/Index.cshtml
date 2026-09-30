@@ -1,0 +1,58 @@
+@model List<GrowthRecord>
+@using System.Text.Json
+@using Microsoft.AspNetCore.Mvc.Rendering
+@{
+    ViewData["Title"] = "Theo dõi tăng trưởng";
+    var chartGroup = Model.GroupBy(x => x.HerdId).OrderByDescending(g => g.Count()).FirstOrDefault();
+    var chartRows = chartGroup == null
+        ? new List<object>()
+        : chartGroup.OrderBy(x => x.RecordedDate).Select(x => (object)new { label = x.RecordedDate.ToString("d/M"), value = x.AverageWeight }).ToList();
+    var chartJson = JsonSerializer.Serialize(chartRows);
+    var chartName = chartGroup?.FirstOrDefault()?.Herd?.Name ?? "Chưa có dữ liệu";
+    var herdOptions = ViewBag.Herds as List<SelectListItem> ?? new();
+}
+<div class="page-toolbar">
+    <div><p class="eyebrow">THEO DÕI CÂN NẶNG</p><h3>Tăng trưởng đàn vật nuôi</h3></div>
+    <div class="page-actions">
+        <form method="get" class="search-form">
+            <select name="herdId" style="min-width:240px;min-height:48px;border:1px solid #cbd9e4;border-radius:12px;padding:10px 13px">
+                <option value="">-- Tất cả đàn --</option>
+                @foreach (var option in herdOptions)
+                {
+                    <option value="@option.Value" selected="@(option.Selected ? "selected" : null)">@option.Text</option>
+                }
+            </select>
+            <button class="btn btn-outline">Lọc</button>
+        </form>
+        @if (User.IsInRole(RoleNames.Manager) || User.IsInRole(RoleNames.Technician))
+        { <a class="btn btn-primary" asp-action="Create">+ Ghi cân nặng</a> }
+    </div>
+</div>
+<div class="grid-2" style="grid-template-columns:minmax(0,1.5fr) minmax(300px,.8fr)">
+    <article class="panel chart-card">
+        <div class="panel-head"><div><p class="eyebrow">BIỂU ĐỒ</p><h3>@chartName</h3></div><span class="pill">kg/con</span></div>
+        <canvas id="growthChart"></canvas>
+    </article>
+    <article class="panel">
+        <p class="eyebrow">HƯỚNG DẪN</p>
+        <h3>Ghi nhận định kỳ</h3>
+        <p class="muted">Nên nhập dữ liệu theo cùng một chu kỳ và ghi rõ cỡ mẫu. AI chỉ phân tích xu hướng từ số liệu đã có và không tự suy diễn nguyên nhân sức khỏe.</p>
+    </article>
+</div>
+<article class="panel">
+<div class="table-wrap"><table class="data-table">
+<thead><tr><th>Ngày</th><th>Đàn</th><th>Khối lượng TB</th><th>Số con cân</th><th>Ghi chú</th><th></th></tr></thead>
+<tbody>
+@foreach (var x in Model)
+{
+<tr>
+<td>@x.RecordedDate.ToString("d/M/yyyy")</td><td><strong>@x.Herd?.Code</strong><br/><span class="muted">@x.Herd?.Name</span></td><td>@x.AverageWeight.ToString("0.0") kg</td><td>@x.SampleSize</td><td>@x.Notes</td>
+<td><div class="row-actions">
+@if (User.IsInRole(RoleNames.Manager) || User.IsInRole(RoleNames.Technician)) { <a class="btn btn-outline btn-sm" asp-action="Edit" asp-route-id="@x.Id">Sửa</a> }
+@if (User.IsInRole(RoleNames.Manager)) { <form asp-action="Delete" asp-route-id="@x.Id" method="post"><button class="btn btn-danger btn-sm" type="submit" data-confirm="Xóa bản ghi này?">Xóa</button></form> }
+</div></td>
+</tr>
+}
+</tbody></table></div>
+</article>
+@section Scripts { <script>FarmCharts.line(document.getElementById('growthChart'), @Html.Raw(chartJson));</script> }

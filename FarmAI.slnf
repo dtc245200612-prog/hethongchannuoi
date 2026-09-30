@@ -1,0 +1,9 @@
+{
+  "solution": {
+    "path": "FarmAI.sln",
+    "projects": [
+      "FarmAI\\FarmAI.csproj",
+      "FarmAI.Tests\\FarmAI.Tests.csproj"
+    ]
+  }
+}

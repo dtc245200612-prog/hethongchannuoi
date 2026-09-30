@@ -1,0 +1,21 @@
+@model List<AppUser>
+@{
+    ViewData["Title"] = "Quản lý tài khoản";
+}
+<div class="page-toolbar">
+    <div><p class="eyebrow">PHÂN QUYỀN</p><h3>Tài khoản hệ thống</h3></div>
+    <a class="btn btn-primary" asp-action="Create">+ Tạo tài khoản</a>
+</div>
+<article class="panel">
+    <div class="notice" style="margin-bottom:18px">Quản lý có toàn quyền; Kỹ thuật viên được cập nhật nghiệp vụ và dùng AI; Nhân viên được xem dữ liệu, ghi nhật ký chăm sóc và giao dịch kho thức ăn.</div>
+    <div class="table-wrap"><table class="data-table">
+        <thead><tr><th>Tên đăng nhập</th><th>Họ tên</th><th>Vai trò</th><th>Trạng thái</th><th></th></tr></thead>
+        <tbody>
+        @foreach (var x in Model)
+        {
+            <tr><td><strong>@x.Username</strong></td><td>@x.FullName</td><td>@RoleNames.ToVietnamese(x.Role)</td><td><span class="status @(x.IsActive ? "ok" : "danger")">@(x.IsActive ? "Hoạt động" : "Đã khóa")</span></td>
+            <td><form asp-action="ToggleActive" asp-route-id="@x.Id" method="post"><button class="btn @(x.IsActive ? "btn-danger" : "btn-primary") btn-sm" type="submit" data-confirm="@(x.IsActive ? "Khóa tài khoản này?" : "Kích hoạt lại tài khoản này?")">@(x.IsActive ? "Khóa" : "Kích hoạt")</button></form></td></tr>
+        }
+        </tbody>
+    </table></div>
+</article>

@@ -1,0 +1,59 @@
+@model LoginViewModel
+@{
+    Layout = null;
+    ViewData["Title"] = "Đăng nhập";
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Đăng nhập | FarmAI ICTU</title>
+    <link rel="icon" type="image/png" href="~/assets/logo-ictu.png" />
+    <link rel="stylesheet" href="~/css/app.css" asp-append-version="true" />
+</head>
+<body>
+<section class="login-screen">
+    <div class="login-card">
+        <div class="brand brand-login">
+            <img src="~/assets/logo-ictu.png" alt="Logo ICTU" />
+            <div>
+                <p class="eyebrow">TRƯỜNG ĐẠI HỌC CNTT & TRUYỀN THÔNG</p>
+                <h1>FarmAI ICTU</h1>
+                <p>Hệ thống quản lý chăn nuôi có tích hợp AI</p>
+            </div>
+        </div>
+
+        <form asp-action="Login" method="post" class="login-form">
+            <input asp-for="ReturnUrl" type="hidden" />
+            <div asp-validation-summary="ModelOnly" class="login-errors"></div>
+            <label>
+                Tên đăng nhập
+                <input asp-for="Username" autocomplete="username" />
+                <span asp-validation-for="Username"></span>
+            </label>
+            <label>
+                Mật khẩu
+                <input asp-for="Password" autocomplete="current-password" />
+                <span asp-validation-for="Password"></span>
+            </label>
+            <button class="btn btn-primary btn-block" type="submit">Đăng nhập</button>
+        </form>
+
+        <div class="demo-accounts">
+            <p><strong>Tài khoản demo</strong></p>
+            <button type="button" data-demo-user="admin" data-demo-pass="admin123">Quản lý: admin / admin123</button>
+            <button type="button" data-demo-user="ktv" data-demo-pass="ktv123">Kỹ thuật viên: ktv / ktv123</button>
+            <button type="button" data-demo-user="nv" data-demo-pass="nv123">Nhân viên: nv / nv123</button>
+        </div>
+        <p class="login-note">Dữ liệu được lưu trong SQLite. Chức năng AI chỉ hỗ trợ quản lý, không chẩn đoán bệnh và không thay thế bác sĩ thú y.</p>
+    </div>
+</section>
+<script>
+    document.querySelectorAll('[data-demo-user]').forEach(btn => btn.addEventListener('click', () => {
+        document.getElementById('Username').value = btn.dataset.demoUser;
+        document.getElementById('Password').value = btn.dataset.demoPass;
+    }));
+</script>
+</body>
+</html>

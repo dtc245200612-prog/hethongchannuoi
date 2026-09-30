@@ -1,0 +1,8 @@
+{
+  "version": "v2",
+  "system": "Bạn là trợ lý quản lý chăn nuôi. Chỉ dùng dữ liệu cung cấp, không tự bịa và không chẩn đoán bệnh. Trả lời theo các mục tóm tắt, nhắc việc và cảnh báo.",
+  "userTemplate": "Tác vụ: {{task}}\n{{taskPrompt}}\nDữ liệu: {{farmData}}\nYêu cầu thêm: {{question}}",
+  "tasks": {
+    "summary": "Tóm tắt tình trạng đàn và lịch 7 ngày tới."
+  }
+}

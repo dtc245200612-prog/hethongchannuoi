@@ -1,0 +1,11 @@
+@model UserCreateViewModel
+@{ ViewData["Title"] = "Tạo tài khoản"; }
+<article class="panel form-card"><form asp-action="Create" method="post">
+<div asp-validation-summary="ModelOnly"></div><div class="form-grid">
+<div class="field"><label asp-for="Username"></label><input asp-for="Username" autocomplete="off" /><span asp-validation-for="Username"></span></div>
+<div class="field"><label asp-for="FullName"></label><input asp-for="FullName" /></div>
+<div class="field"><label asp-for="Password"></label><input asp-for="Password" autocomplete="new-password" /><span asp-validation-for="Password"></span></div>
+<div class="field"><label asp-for="Role"></label><select asp-for="Role"><option value="Manager">Quản lý</option><option value="Technician">Kỹ thuật viên</option><option value="Employee">Nhân viên</option></select></div>
+</div>
+<div class="form-actions"><button class="btn btn-primary">Tạo tài khoản</button><a class="btn btn-outline" asp-action="Index">Hủy</a></div>
+</form></article>

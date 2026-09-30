@@ -1,0 +1,21 @@
+@model List<ReproductionRecord>
+@{
+    ViewData["Title"] = "Theo dõi sinh sản";
+}
+<div class="page-toolbar">
+    <div><p class="eyebrow">SINH SẢN</p><h3>Lịch sử & kế hoạch sinh sản</h3></div>
+    @if (User.IsInRole(RoleNames.Manager) || User.IsInRole(RoleNames.Technician))
+    { <a class="btn btn-primary" asp-action="Create">+ Ghi sự kiện</a> }
+</div>
+<article class="panel"><div class="table-wrap"><table class="data-table">
+<thead><tr><th>Ngày</th><th>Đàn</th><th>Sự kiện</th><th>Kết quả</th><th>Ngày dự kiến tiếp theo</th><th>Ghi chú</th><th></th></tr></thead>
+<tbody>
+@foreach (var x in Model)
+{
+<tr><td>@x.Date.ToString("d/M/yyyy")</td><td><strong>@x.Herd?.Code</strong><br/><span class="muted">@x.Herd?.Name</span></td><td>@x.EventType</td><td>@x.Result</td><td>@(x.NextExpectedDate?.ToString("d/M/yyyy") ?? "—")</td><td>@x.Notes</td>
+<td><div class="row-actions">
+@if (User.IsInRole(RoleNames.Manager) || User.IsInRole(RoleNames.Technician)) { <a class="btn btn-outline btn-sm" asp-action="Edit" asp-route-id="@x.Id">Sửa</a> }
+@if (User.IsInRole(RoleNames.Manager)) { <form asp-action="Delete" asp-route-id="@x.Id" method="post"><button class="btn btn-danger btn-sm" data-confirm="Xóa bản ghi sinh sản này?">Xóa</button></form> }
+</div></td></tr>
+}
+</tbody></table></div></article>

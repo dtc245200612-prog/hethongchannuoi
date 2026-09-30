@@ -1,0 +1,61 @@
+@model ReportsViewModel
+@using System.Text.Json
+@{
+    ViewData["Title"] = "Báo cáo & thống kê";
+    var growthGroup = Model.Growth.GroupBy(x => x.HerdId).OrderByDescending(g => g.Count()).FirstOrDefault();
+    var chartData = growthGroup == null
+        ? new List<object>()
+        : growthGroup.OrderBy(x => x.RecordedDate).Select(x => (object)new { label = x.RecordedDate.ToString("d/M"), value = x.AverageWeight }).ToList();
+    var chartJson = JsonSerializer.Serialize(chartData);
+    var growthName = growthGroup?.FirstOrDefault()?.Herd?.Name ?? "Chưa có dữ liệu";
+}
+<div class="page-toolbar">
+    <div><p class="eyebrow">THỐNG KÊ</p><h3>Báo cáo vận hành trang trại</h3></div>
+    <span class="pill">Cập nhật từ CSDL</span>
+</div>
+<div class="metric-grid">
+    <div class="metric"><div class="label">Doanh thu</div><div class="number">@((Model.TotalRevenue / 1_000_000m).ToString("0.0")) tr</div><div class="kpi-note">Tổng giao dịch xuất bán</div></div>
+    <div class="metric"><div class="label">Chi phí</div><div class="number">@((Model.TotalExpense / 1_000_000m).ToString("0.0")) tr</div><div class="kpi-note">Chi phí đã ghi nhận</div></div>
+    <div class="metric"><div class="label">Chênh lệch thu - chi</div><div class="number">@((Model.Profit / 1_000_000m).ToString("0.0")) tr</div><div class="kpi-note">Số liệu quản trị, chưa phải báo cáo kế toán</div></div>
+    <div class="metric"><div class="label">Tỷ lệ hao hụt</div><div class="number">@($"{Model.MortalityRate:0.00}%")</div><div class="kpi-note">@Model.Mortality con / @(Model.CurrentAnimals + Model.Mortality) con cơ sở</div></div>
+</div>
+
+<div class="grid-2">
+    <article class="panel chart-card">
+        <div class="panel-head"><div><p class="eyebrow">TĂNG TRƯỞNG</p><h3>@growthName</h3></div><span class="pill">kg/con</span></div>
+        <canvas id="reportGrowthChart"></canvas>
+    </article>
+    <article class="panel">
+        <div class="panel-head"><div><p class="eyebrow">KHO</p><h3>Tồn kho cần chú ý</h3></div><span class="pill pill-warning">@Model.LowStockItems.Count mục</span></div>
+        @if (Model.LowStockItems.Count == 0)
+        { <div class="empty-state">Không có thức ăn chạm ngưỡng tồn tối thiểu.</div> }
+        else
+        {
+            <div class="list">
+            @foreach (var x in Model.LowStockItems)
+            {
+                <div class="list-row"><div><strong>@x.Name</strong><br/><small>Tối thiểu @x.MinimumStock @x.Unit</small></div><span class="status danger">@x.Quantity @x.Unit</span></div>
+            }
+            </div>
+        }
+    </article>
+</div>
+
+<div class="grid-2">
+    <article class="panel">
+        <h3 class="section-title">Xuất bán gần đây</h3>
+        <div class="table-wrap"><table class="data-table"><thead><tr><th>Ngày</th><th>Đàn</th><th>SL</th><th>Doanh thu</th></tr></thead><tbody>
+        @foreach (var x in Model.RecentSales)
+        { <tr><td>@x.Date.ToString("d/M/yyyy")</td><td>@x.Herd?.Code</td><td>@x.Quantity</td><td>@x.TotalAmount.ToString("N0") đ</td></tr> }
+        </tbody></table></div>
+    </article>
+    <article class="panel">
+        <h3 class="section-title">Chi phí gần đây</h3>
+        <div class="table-wrap"><table class="data-table"><thead><tr><th>Ngày</th><th>Nhóm</th><th>Nội dung</th><th>Số tiền</th></tr></thead><tbody>
+        @foreach (var x in Model.RecentExpenses)
+        { <tr><td>@x.Date.ToString("d/M/yyyy")</td><td>@x.Category</td><td>@x.Description</td><td>@x.Amount.ToString("N0") đ</td></tr> }
+        </tbody></table></div>
+    </article>
+</div>
+<div class="notice">Các chỉ số trên phục vụ theo dõi nghiệp vụ và đánh giá xu hướng. Dữ liệu tài chính là dữ liệu quản trị trong hệ thống, không thay thế báo cáo kế toán chính thức.</div>
+@section Scripts { <script>FarmCharts.line(document.getElementById('reportGrowthChart'), @Html.Raw(chartJson));</script> }

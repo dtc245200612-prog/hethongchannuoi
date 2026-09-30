@@ -1,0 +1,11 @@
+@model ExpenseRecord
+@{ ViewData["Title"] = "Cập nhật chi phí"; }
+<article class="panel form-card"><form asp-action="Edit" asp-route-id="@Model.Id" method="post">
+<input asp-for="Id" type="hidden" /><div asp-validation-summary="ModelOnly"></div><div class="form-grid">
+<div class="field"><label asp-for="Date"></label><input asp-for="Date" /></div>
+<div class="field"><label asp-for="Category"></label><select asp-for="Category"><option>Thức ăn</option><option>Vaccine</option><option>Thuốc & vật tư</option><option>Điện nước</option><option>Nhân công</option><option>Khác</option></select></div>
+<div class="field full"><label asp-for="Description"></label><input asp-for="Description" /></div>
+<div class="field"><label asp-for="Amount"></label><input asp-for="Amount" step="1" /></div>
+<div class="field full"><label asp-for="Notes"></label><textarea asp-for="Notes"></textarea></div>
+</div><div class="form-actions"><button class="btn btn-primary">Lưu thay đổi</button><a class="btn btn-outline" asp-action="Index">Quay lại</a></div>
+</form></article>

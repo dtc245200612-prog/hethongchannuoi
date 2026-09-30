@@ -1,0 +1,23 @@
+@model HerdFormViewModel
+@{
+    ViewData["Title"] = "Cập nhật đàn vật nuôi";
+}
+<article class="panel form-card">
+    <form asp-action="Edit" asp-route-id="@Model.Herd.Id" method="post">
+        <input asp-for="Herd.Id" type="hidden" />
+        <div asp-validation-summary="ModelOnly"></div>
+        <div class="form-grid">
+            <div class="field"><label asp-for="Herd.Code"></label><input asp-for="Herd.Code" /><span asp-validation-for="Herd.Code"></span></div>
+            <div class="field"><label asp-for="Herd.Name"></label><input asp-for="Herd.Name" /><span asp-validation-for="Herd.Name"></span></div>
+            <div class="field"><label asp-for="Herd.Species"></label><input asp-for="Herd.Species" /><span asp-validation-for="Herd.Species"></span></div>
+            <div class="field"><label asp-for="Herd.Breed"></label><input asp-for="Herd.Breed" /></div>
+            <div class="field"><label asp-for="Herd.BarnId"></label><select asp-for="Herd.BarnId" asp-items="Model.Barns"></select></div>
+            <div class="field"><label asp-for="Herd.Quantity"></label><input asp-for="Herd.Quantity" /></div>
+            <div class="field"><label asp-for="Herd.StartDate"></label><input asp-for="Herd.StartDate" /></div>
+            <div class="field"><label asp-for="Herd.Status"></label><select asp-for="Herd.Status"><option>Ổn định</option><option>Cần theo dõi</option><option>Tạm ngừng</option></select></div>
+            <div class="field"><label asp-for="Herd.MortalityCount"></label><input asp-for="Herd.MortalityCount" /></div>
+            <div class="field full"><label asp-for="Herd.Notes"></label><textarea asp-for="Herd.Notes"></textarea></div>
+        </div>
+        <div class="form-actions"><button class="btn btn-primary">Lưu thay đổi</button><a class="btn btn-outline" asp-action="Index">Quay lại</a></div>
+    </form>
+</article>

@@ -1,0 +1,22 @@
+FarmAI OpenAI/UI fix validation report
+Date: 2026-09-22
+
+Required files:
+- OK: FarmAI.sln
+- OK: FarmAI.slnf
+- OK: FarmAI/FarmAI.csproj
+- OK: FarmAI/Program.cs
+- OK: FarmAI/Services/OpenAiService.cs
+- OK: FarmAI/Controllers/AiApiController.cs
+- OK: FarmAI/Views/Ai/Index.cshtml
+- OK: FarmAI/wwwroot/js/site.js
+- OK: FarmAI/wwwroot/css/app.css
+- OK: FarmAI/appsettings.json
+- OK: FarmAI/Prompts/prompts.json
+- OK: FarmAI.Tests/FarmAI.Tests.csproj
+- OK: no obvious OpenAI API key hardcoded in source
+- OK: appsettings.json and prompt JSON parsed with Python json.tool
+- OK: wwwroot/js/site.js passed node --check
+- NOTE: .NET SDK is not installed in this sandbox, so dotnet restore/build/test could not be executed here.
+
+OpenAI latency fixes: async fetch UI, 18s server timeout, 25s browser guard, 8k input char cap, 700 output token cap, low verbosity/no reasoning, parallel Prompt Lab calls, HTTP error-specific fallback.

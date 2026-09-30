@@ -1,0 +1,14 @@
+@model MedicineItem
+@{ ViewData["Title"] = "Cập nhật thuốc / vật tư"; }
+<article class="panel form-card"><form asp-action="EditMedicine" asp-route-id="@Model.Id" method="post">
+<input asp-for="Id" type="hidden" /><div asp-validation-summary="ModelOnly"></div>
+<div class="form-grid">
+<div class="field"><label asp-for="Name"></label><input asp-for="Name" /></div>
+<div class="field"><label asp-for="Unit"></label><input asp-for="Unit" /></div>
+<div class="field"><label asp-for="Quantity"></label><input asp-for="Quantity" step="0.1" /></div>
+<div class="field"><label asp-for="MinimumStock"></label><input asp-for="MinimumStock" step="0.1" /></div>
+<div class="field"><label asp-for="ExpiryDate"></label><input asp-for="ExpiryDate" /></div>
+<div class="field full"><label asp-for="Notes"></label><textarea asp-for="Notes"></textarea></div>
+</div>
+<div class="form-actions"><button class="btn btn-primary">Lưu thay đổi</button><a class="btn btn-outline" asp-action="Index">Quay lại</a></div>
+</form></article>

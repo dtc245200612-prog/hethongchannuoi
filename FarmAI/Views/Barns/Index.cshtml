@@ -1,0 +1,41 @@
+@model List<Barn>
+@{
+    ViewData["Title"] = "Quản lý chuồng trại";
+}
+<div class="page-toolbar">
+    <div><p class="eyebrow">QUẢN LÝ DỮ LIỆU</p><h3>Danh sách chuồng trại</h3></div>
+    @if (User.IsInRole(RoleNames.Manager) || User.IsInRole(RoleNames.Technician))
+    {
+        <a class="btn btn-primary" asp-action="Create">+ Thêm chuồng</a>
+    }
+</div>
+<article class="panel">
+    <div class="table-wrap">
+        <table class="data-table">
+            <thead><tr><th>Mã</th><th>Tên chuồng</th><th>Sức chứa</th><th>Hiện có</th><th>Nhiệt độ</th><th>Độ ẩm</th><th>Trạng thái</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var x in Model)
+            {
+                var current = x.Herds.Sum(h => h.Quantity);
+                <tr>
+                    <td><strong>@x.Code</strong></td>
+                    <td>@x.Name</td>
+                    <td>@x.Capacity</td>
+                    <td>@current</td>
+                    <td>@x.Temperature.ToString("0.0") °C</td>
+                    <td>@($"{x.Humidity}%")</td>
+                    <td><span class="status @(x.Status == "Tốt" ? "ok" : "warn")">@x.Status</span></td>
+                    <td><div class="row-actions">
+                        @if (User.IsInRole(RoleNames.Manager) || User.IsInRole(RoleNames.Technician))
+                        { <a class="btn btn-outline btn-sm" asp-action="Edit" asp-route-id="@x.Id">Sửa</a> }
+                        @if (User.IsInRole(RoleNames.Manager))
+                        {
+                            <form asp-action="Delete" asp-route-id="@x.Id" method="post"><button type="submit" class="btn btn-danger btn-sm" data-confirm="Xóa chuồng này?">Xóa</button></form>
+                        }
+                    </div></td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</article>

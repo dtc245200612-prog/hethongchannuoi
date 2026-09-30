@@ -1,0 +1,80 @@
+@model FeedIndexViewModel
+@{
+    ViewData["Title"] = "Thức ăn & kho";
+}
+<div class="page-toolbar">
+    <div><p class="eyebrow">KHO VẬT TƯ</p><h3>Thức ăn, thuốc & vật tư</h3></div>
+    <div class="page-actions">
+        <a class="btn btn-primary" asp-action="Transaction">+ Nhập / xuất thức ăn</a>
+        @if (User.IsInRole(RoleNames.Manager) || User.IsInRole(RoleNames.Technician))
+        {
+            <a class="btn btn-outline" asp-action="CreateItem">+ Mặt hàng thức ăn</a>
+            <a class="btn btn-outline" asp-action="CreateMedicine">+ Thuốc / vật tư</a>
+        }
+    </div>
+</div>
+<div data-tabs>
+    <div class="tabs">
+        <button type="button" class="tab-btn active" data-tab="feed">Tồn kho thức ăn</button>
+        <button type="button" class="tab-btn" data-tab="transactions">Lịch sử nhập / xuất</button>
+        <button type="button" class="tab-btn" data-tab="medicine">Thuốc & vật tư</button>
+    </div>
+
+    <div class="tab-pane active" data-pane="feed">
+        <article class="panel">
+            <div class="table-wrap"><table class="data-table">
+                <thead><tr><th>Tên thức ăn</th><th>Đơn vị</th><th>Tồn kho</th><th>Mức tối thiểu</th><th>Đơn giá</th><th>Cảnh báo</th><th></th></tr></thead>
+                <tbody>
+                @foreach (var x in Model.Items)
+                {
+                    var low = x.Quantity <= x.MinimumStock;
+                    <tr>
+                        <td><strong>@x.Name</strong></td><td>@x.Unit</td><td>@x.Quantity.ToString("N1")</td><td>@x.MinimumStock.ToString("N1")</td><td>@x.UnitCost.ToString("N0") đ</td>
+                        <td><span class="status @(low ? "danger" : "ok")">@(low ? "Sắp hết" : "Đủ dùng")</span></td>
+                        <td><div class="row-actions">
+                            @if (User.IsInRole(RoleNames.Manager) || User.IsInRole(RoleNames.Technician)) { <a class="btn btn-outline btn-sm" asp-action="EditItem" asp-route-id="@x.Id">Sửa</a> }
+                            @if (User.IsInRole(RoleNames.Manager)) { <form asp-action="DeleteItem" asp-route-id="@x.Id" method="post"><button class="btn btn-danger btn-sm" data-confirm="Xóa mặt hàng này và lịch sử giao dịch liên quan?">Xóa</button></form> }
+                        </div></td>
+                    </tr>
+                }
+                </tbody>
+            </table></div>
+        </article>
+    </div>
+
+    <div class="tab-pane" data-pane="transactions">
+        <article class="panel">
+            <div class="table-wrap"><table class="data-table">
+                <thead><tr><th>Ngày</th><th>Mặt hàng</th><th>Đàn</th><th>Loại</th><th>Số lượng</th><th>Ghi chú</th></tr></thead>
+                <tbody>
+                @foreach (var x in Model.Transactions)
+                {
+                    <tr><td>@x.Date.ToString("d/M/yyyy")</td><td>@x.FeedItem?.Name</td><td>@(x.Herd?.Code ?? "—")</td><td><span class="status @(x.TransactionType == "Nhập" ? "ok" : "info")">@x.TransactionType</span></td><td>@x.Quantity.ToString("N1") @x.FeedItem?.Unit</td><td>@x.Notes</td></tr>
+                }
+                </tbody>
+            </table></div>
+        </article>
+    </div>
+
+    <div class="tab-pane" data-pane="medicine">
+        <article class="panel">
+            <div class="notice warning" style="margin-bottom:16px">Kho thuốc/vật tư chỉ dùng để quản lý số lượng và hạn dùng. Hệ thống không kê thuốc và không đưa chỉ định điều trị.</div>
+            <div class="table-wrap"><table class="data-table">
+                <thead><tr><th>Tên thuốc / vật tư</th><th>Đơn vị</th><th>Tồn kho</th><th>Mức tối thiểu</th><th>Hạn sử dụng</th><th>Trạng thái</th><th></th></tr></thead>
+                <tbody>
+                @foreach (var x in Model.Medicines)
+                {
+                    var low = x.Quantity <= x.MinimumStock;
+                    var expirySoon = x.ExpiryDate.HasValue && x.ExpiryDate.Value <= DateTime.Today.AddDays(60);
+                    <tr><td><strong>@x.Name</strong><br/><span class="muted">@x.Notes</span></td><td>@x.Unit</td><td>@x.Quantity.ToString("N1")</td><td>@x.MinimumStock.ToString("N1")</td><td>@(x.ExpiryDate?.ToString("d/M/yyyy") ?? "—")</td>
+                    <td><span class="status @(low || expirySoon ? "warn" : "ok")">@(low ? "Tồn thấp" : expirySoon ? "Gần hết hạn" : "Ổn")</span></td>
+                    <td><div class="row-actions">
+                        @if (User.IsInRole(RoleNames.Manager) || User.IsInRole(RoleNames.Technician)) { <a class="btn btn-outline btn-sm" asp-action="EditMedicine" asp-route-id="@x.Id">Sửa</a> }
+                        @if (User.IsInRole(RoleNames.Manager)) { <form asp-action="DeleteMedicine" asp-route-id="@x.Id" method="post"><button class="btn btn-danger btn-sm" data-confirm="Xóa thuốc/vật tư này?">Xóa</button></form> }
+                    </div></td></tr>
+                }
+                </tbody>
+            </table></div>
+        </article>
+    </div>
+</div>

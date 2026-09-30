@@ -1,0 +1,25 @@
+@model List<SaleRecord>
+@{
+    ViewData["Title"] = "Xuất bán & doanh thu";
+    var total = Model.Sum(x => x.TotalAmount);
+}
+<div class="page-toolbar">
+    <div><p class="eyebrow">KINH DOANH</p><h3>Xuất bán & doanh thu</h3></div>
+    @if (User.IsInRole(RoleNames.Manager) || User.IsInRole(RoleNames.Technician))
+    { <a class="btn btn-primary" asp-action="Create">+ Ghi xuất bán</a> }
+</div>
+<div class="metric-grid">
+    <div class="metric"><div class="label">Số giao dịch</div><div class="number">@Model.Count</div></div>
+    <div class="metric"><div class="label">Tổng số con xuất bán</div><div class="number">@Model.Sum(x => x.Quantity).ToString("N0")</div></div>
+    <div class="metric"><div class="label">Tổng doanh thu</div><div class="number">@((total / 1_000_000m).ToString("0.0")) tr</div></div>
+    <div class="metric"><div class="label">Giao dịch gần nhất</div><div class="number" style="font-size:22px">@(Model.FirstOrDefault()?.Date.ToString("d/M/yyyy") ?? "—")</div></div>
+</div>
+<article class="panel"><div class="table-wrap"><table class="data-table">
+<thead><tr><th>Ngày</th><th>Đàn</th><th>Số lượng</th><th>KL TB</th><th>Đơn giá</th><th>Khách hàng</th><th>Doanh thu</th><th></th></tr></thead>
+<tbody>
+@foreach (var x in Model)
+{
+<tr><td>@x.Date.ToString("d/M/yyyy")</td><td><strong>@x.Herd?.Code</strong><br/><span class="muted">@x.Herd?.Name</span></td><td>@x.Quantity</td><td>@x.AverageWeight.ToString("0.##") kg</td><td>@x.UnitPrice.ToString("N0") đ/kg</td><td>@x.Buyer</td><td><strong>@x.TotalAmount.ToString("N0") đ</strong></td>
+<td>@if (User.IsInRole(RoleNames.Manager)) { <form asp-action="Delete" asp-route-id="@x.Id" method="post"><button class="btn btn-danger btn-sm" data-confirm="Xóa giao dịch này? Số lượng đàn sẽ được hoàn lại.">Xóa</button></form> }</td></tr>
+}
+</tbody></table></div></article>

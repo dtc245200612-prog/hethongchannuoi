@@ -1,0 +1,15 @@
+@model GenericHerdFormViewModel<GrowthRecord>
+@{ ViewData["Title"] = "Cập nhật tăng trưởng"; }
+<article class="panel form-card">
+<form asp-action="Edit" asp-route-id="@Model.Item.Id" method="post">
+<input asp-for="Item.Id" type="hidden" />
+<div asp-validation-summary="ModelOnly"></div>
+<div class="form-grid">
+<div class="field"><label asp-for="Item.HerdId"></label><select asp-for="Item.HerdId" asp-items="Model.Herds"></select></div>
+<div class="field"><label asp-for="Item.RecordedDate"></label><input asp-for="Item.RecordedDate" /></div>
+<div class="field"><label asp-for="Item.AverageWeight"></label><input asp-for="Item.AverageWeight" step="0.1" /></div>
+<div class="field"><label asp-for="Item.SampleSize"></label><input asp-for="Item.SampleSize" /></div>
+<div class="field full"><label asp-for="Item.Notes"></label><textarea asp-for="Item.Notes"></textarea></div>
+</div>
+<div class="form-actions"><button class="btn btn-primary">Lưu thay đổi</button><a class="btn btn-outline" asp-action="Index">Quay lại</a></div>
+</form></article>

@@ -1,0 +1,19 @@
+@model GenericHerdFormViewModel<CareLog>
+@{
+    ViewData["Title"] = "Cập nhật nhật ký chăm sóc";
+}
+<article class="panel form-card">
+<form asp-action="Edit" asp-route-id="@Model.Item.Id" method="post">
+<input asp-for="Item.Id" type="hidden" />
+<div asp-validation-summary="ModelOnly"></div>
+<div class="form-grid">
+<div class="field"><label asp-for="Item.HerdId"></label><select asp-for="Item.HerdId" asp-items="Model.Herds"></select></div>
+<div class="field"><label asp-for="Item.Date"></label><input asp-for="Item.Date" /></div>
+<div class="field"><label asp-for="Item.Type"></label><select asp-for="Item.Type"><option>Chăm sóc</option><option>Sức khỏe</option><option>Môi trường</option><option>Vệ sinh</option><option>Khác</option></select></div>
+<div class="field"><label asp-for="Item.StaffName"></label><input asp-for="Item.StaffName" /></div>
+<div class="field full"><label asp-for="Item.Description"></label><textarea asp-for="Item.Description"></textarea></div>
+<div class="field-check full"><input asp-for="Item.RequiresHealthCheck" /><label asp-for="Item.RequiresHealthCheck"></label></div>
+</div>
+<div class="form-actions"><button class="btn btn-primary">Lưu thay đổi</button><a class="btn btn-outline" asp-action="Index">Quay lại</a></div>
+</form>
+</article>

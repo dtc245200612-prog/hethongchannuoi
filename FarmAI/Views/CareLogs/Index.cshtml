@@ -1,0 +1,52 @@
+@model CareIndexViewModel
+@{
+    ViewData["Title"] = "Nhật ký & lịch chăm sóc";
+    var today = DateTime.Today;
+}
+<div class="page-toolbar">
+    <div><p class="eyebrow">CHĂM SÓC</p><h3>Nhật ký & lịch chăm sóc</h3></div>
+    <div class="page-actions">
+        <a class="btn btn-primary" asp-action="Create">+ Ghi nhật ký</a>
+        @if (User.IsInRole(RoleNames.Manager) || User.IsInRole(RoleNames.Technician))
+        { <a class="btn btn-outline" asp-action="CreateSchedule">+ Lập lịch chăm sóc</a> }
+    </div>
+</div>
+<div data-tabs>
+<div class="tabs"><button type="button" class="tab-btn active" data-tab="logs">Nhật ký đã thực hiện</button><button type="button" class="tab-btn" data-tab="schedules">Lịch chăm sóc</button></div>
+<div class="tab-pane active" data-pane="logs">
+<article class="panel">
+<div class="table-wrap"><table class="data-table">
+<thead><tr><th>Ngày</th><th>Đàn</th><th>Loại</th><th>Nội dung</th><th>Người thực hiện</th><th>Sức khỏe</th><th></th></tr></thead>
+<tbody>
+@foreach (var x in Model.Logs)
+{
+<tr>
+<td>@x.Date.ToString("d/M/yyyy")</td><td><strong>@x.Herd?.Code</strong><br/><span class="muted">@x.Herd?.Name</span></td><td>@x.Type</td><td>@x.Description</td><td>@x.StaffName</td>
+<td>@if (x.RequiresHealthCheck) { <span class="status warn">Cần kiểm tra</span> } else { <span class="status ok">Bình thường</span> }</td>
+<td><div class="row-actions">
+@if (User.IsInRole(RoleNames.Manager) || User.IsInRole(RoleNames.Technician)) { <a class="btn btn-outline btn-sm" asp-action="Edit" asp-route-id="@x.Id">Sửa</a><form asp-action="Delete" asp-route-id="@x.Id" method="post"><button class="btn btn-danger btn-sm" type="submit" data-confirm="Xóa nhật ký này?">Xóa</button></form> }
+</div></td>
+</tr>
+}
+</tbody></table></div>
+</article>
+</div>
+<div class="tab-pane" data-pane="schedules">
+<article class="panel">
+<div class="table-wrap"><table class="data-table">
+<thead><tr><th>Ngày dự kiến</th><th>Đàn</th><th>Công việc</th><th>Phụ trách</th><th>Trạng thái</th><th>Ngày hoàn thành</th><th></th></tr></thead>
+<tbody>
+@foreach (var x in Model.Schedules)
+{
+    var computed = FarmAI.Services.FarmRules.GetCareScheduleStatus(x.ScheduledDate, x.CompletedDate, today);
+    var css = computed == "Đã hoàn thành" ? "ok" : computed == "Quá hạn" ? "danger" : computed == "Sắp đến hạn" ? "warn" : "info";
+<tr><td>@x.ScheduledDate.ToString("d/M/yyyy")</td><td><strong>@x.Herd?.Code</strong><br/><span class="muted">@x.Herd?.Name</span></td><td>@x.Title<br/><span class="muted">@x.Notes</span></td><td>@x.Assignee</td><td><span class="status @css">@computed</span></td><td>@(x.CompletedDate?.ToString("d/M/yyyy") ?? "—")</td>
+<td><div class="row-actions">
+@if ((User.IsInRole(RoleNames.Manager) || User.IsInRole(RoleNames.Technician)) && !x.CompletedDate.HasValue) { <form asp-action="CompleteSchedule" asp-route-id="@x.Id" method="post"><button class="btn btn-primary btn-sm">Hoàn thành</button></form> }
+@if (User.IsInRole(RoleNames.Manager)) { <form asp-action="DeleteSchedule" asp-route-id="@x.Id" method="post"><button class="btn btn-danger btn-sm" data-confirm="Xóa lịch chăm sóc này?">Xóa</button></form> }
+</div></td></tr>
+}
+</tbody></table></div>
+</article>
+</div>
+</div>

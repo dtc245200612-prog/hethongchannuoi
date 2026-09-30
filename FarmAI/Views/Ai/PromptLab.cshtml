@@ -1,0 +1,97 @@
+@model PromptLabViewModel
+@{
+    ViewData["Title"] = "Thử nghiệm Prompt AI";
+}
+
+<div class="page-toolbar">
+    <div>
+        <p class="eyebrow">MINH CHỨNG TIÊU CHÍ 4</p>
+        <h3>So sánh Prompt V1 → V2 → V3</h3>
+    </div>
+    <div class="page-actions">
+        <a class="btn btn-ghost" asp-action="Index">← Trở lại Trợ lý AI</a>
+        <div class="ai-status">
+            <span class="dot @(Model.ExternalAiConfigured ? "on" : "")"></span>
+            <span>@(Model.ExternalAiConfigured ? "OpenAI API đã cấu hình" : "Chưa có API key")</span>
+        </div>
+    </div>
+</div>
+
+@if (!Model.ExternalAiConfigured)
+{
+    <div class="notice warning" style="margin-bottom:20px">
+        <strong>Để có minh chứng thử nghiệm thật:</strong> hãy cấu hình <code>OPENAI_API_KEY</code> rồi chạy trang này.
+        Khi chưa có key, hệ thống vẫn chạy fallback để kiểm tra luồng nhưng kết quả đó không được xem là so sánh model thật.
+    </div>
+}
+
+<article class="panel form-card" style="max-width:none">
+    <div class="panel-head">
+        <div><p class="eyebrow">CÙNG MỘT DỮ LIỆU KIỂM THỬ</p><h3>Chạy 3 phiên bản prompt</h3></div>
+        <span class="pill pill-ai">V1 · V2 · V3</span>
+    </div>
+    <form id="prompt-lab-form" asp-action="PromptLab" method="post" style="display:grid;gap:16px">
+        <div asp-validation-summary="ModelOnly"></div>
+        <div class="form-grid">
+            <div class="field">
+                <label asp-for="Task"></label>
+                <select asp-for="Task">
+                    <option value="summary">Tóm tắt tình trạng đàn</option>
+                    <option value="schedule">Nhắc lịch chăm sóc & tiêm phòng</option>
+                    <option value="growth">Phân tích tăng trưởng</option>
+                    <option value="risk">Điểm cần theo dõi</option>
+                </select>
+            </div>
+            <div class="field full">
+                <label asp-for="Question"></label>
+                <textarea asp-for="Question" rows="4"></textarea>
+                <span asp-validation-for="Question"></span>
+            </div>
+        </div>
+        <div class="form-actions">
+            <button id="prompt-lab-submit" class="btn btn-primary" type="submit"><span class="prompt-lab-label">🧪 Chạy V1, V2 và V3</span><span class="prompt-lab-loading" hidden><span class="ai-spinner" aria-hidden="true"></span> Đang chạy 3 prompt song song...</span></button>
+        </div>
+    </form>
+</article>
+
+@if (Model.Results.Count > 0)
+{
+    <div class="prompt-lab-grid" style="margin-top:24px">
+        @foreach (var item in Model.Results)
+        {
+            <article class="panel prompt-lab-card">
+                <div class="panel-head">
+                    <div>
+                        <p class="eyebrow">@item.PromptFile</p>
+                        <h3>Prompt @item.Version.ToUpperInvariant()</h3>
+                    </div>
+                    <span class="pill">@item.ElapsedMilliseconds ms</span>
+                </div>
+                <div class="notice" style="margin-bottom:16px">
+                    <strong>System prompt:</strong><br />@item.SystemPrompt
+                </div>
+                <div class="ai-result-card">
+                    <div><span class="pill pill-ai">@item.Result.Provider</span></div>
+                    <div><h4>@item.Result.Title</h4><p>@item.Result.Summary</p></div>
+                    @if (item.Result.Highlights.Count > 0)
+                    {
+                        <div><h4>Điểm đáng chú ý</h4><ul>@foreach (var x in item.Result.Highlights) { <li>@x</li> }</ul></div>
+                    }
+                    @if (item.Result.Reminders.Count > 0)
+                    {
+                        <div><h4>Nhắc việc</h4><ul>@foreach (var x in item.Result.Reminders) { <li>@x</li> }</ul></div>
+                    }
+                    @if (item.Result.Warnings.Count > 0)
+                    {
+                        <div><h4>Cần theo dõi</h4><ul>@foreach (var x in item.Result.Warnings) { <li>@x</li> }</ul></div>
+                    }
+                </div>
+                <div class="ai-disclaimer">Khuyến cáo: Kết quả do AI tạo ra chỉ mang tính chất tham khảo, không thay thế cho chỉ định của bác sĩ thú y.</div>
+            </article>
+        }
+    </div>
+
+    <div class="notice" style="margin-top:20px">
+        Hệ thống đã ghi cả 3 lần chạy vào <strong>Nhật ký AI</strong>. Bạn có thể chụp màn hình trang này và trang nhật ký để làm minh chứng tối ưu prompt.
+    </div>
+}

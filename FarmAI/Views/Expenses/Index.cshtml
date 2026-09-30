@@ -1,0 +1,16 @@
+@model List<ExpenseRecord>
+@{
+    ViewData["Title"] = "Quản lý chi phí";
+}
+<div class="page-toolbar">
+    <div><p class="eyebrow">TÀI CHÍNH</p><h3>Chi phí vận hành</h3></div>
+    <a class="btn btn-primary" asp-action="Create">+ Ghi chi phí</a>
+</div>
+<article class="panel"><div class="table-wrap"><table class="data-table">
+<thead><tr><th>Ngày</th><th>Nhóm chi phí</th><th>Nội dung</th><th>Số tiền</th><th>Ghi chú</th><th></th></tr></thead>
+<tbody>
+@foreach (var x in Model)
+{
+<tr><td>@x.Date.ToString("d/M/yyyy")</td><td><span class="status info">@x.Category</span></td><td>@x.Description</td><td><strong>@x.Amount.ToString("N0") đ</strong></td><td>@x.Notes</td><td><div class="row-actions"><a class="btn btn-outline btn-sm" asp-action="Edit" asp-route-id="@x.Id">Sửa</a><form asp-action="Delete" asp-route-id="@x.Id" method="post"><button class="btn btn-danger btn-sm" data-confirm="Xóa khoản chi này?">Xóa</button></form></div></td></tr>
+}
+</tbody></table></div></article>

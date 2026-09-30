@@ -1,0 +1,45 @@
+@model List<VaccineRecord>
+@{
+    ViewData["Title"] = "Tiêm phòng";
+    var today = DateTime.Today;
+}
+<div class="page-toolbar">
+    <div><p class="eyebrow">LỊCH & CẢNH BÁO</p><h3>Quản lý tiêm phòng</h3></div>
+    @if (User.IsInRole(RoleNames.Manager) || User.IsInRole(RoleNames.Technician))
+    {
+        <a class="btn btn-primary" asp-action="Create">+ Thêm lịch</a>
+    }
+</div>
+<article class="panel">
+    <div class="table-wrap">
+        <table class="data-table">
+            <thead><tr><th>Đàn</th><th>Vaccine</th><th>Ngày dự kiến</th><th>Ngày thực hiện</th><th>Trạng thái</th><th>Ghi chú</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var x in Model)
+            {
+                var overdue = !x.CompletedDate.HasValue && x.ScheduledDate.Date < today;
+                var statusClass = x.CompletedDate.HasValue ? "ok" : overdue ? "danger" : x.ScheduledDate <= today.AddDays(7) ? "warn" : "info";
+                var statusText = x.CompletedDate.HasValue ? "Đã tiêm" : overdue ? "Quá hạn" : x.Status;
+                <tr>
+                    <td><strong>@x.Herd?.Code</strong><br/><span class="muted">@x.Herd?.Name</span></td>
+                    <td>@x.VaccineName</td>
+                    <td>@x.ScheduledDate.ToString("d/M/yyyy")</td>
+                    <td>@(x.CompletedDate?.ToString("d/M/yyyy") ?? "—")</td>
+                    <td><span class="status @statusClass">@statusText</span></td>
+                    <td>@x.Notes</td>
+                    <td><div class="row-actions">
+                        @if ((User.IsInRole(RoleNames.Manager) || User.IsInRole(RoleNames.Technician)) && !x.CompletedDate.HasValue)
+                        {
+                            <form asp-action="Complete" asp-route-id="@x.Id" method="post"><button class="btn btn-primary btn-sm" type="submit">Hoàn thành</button></form>
+                        }
+                        @if (User.IsInRole(RoleNames.Manager) || User.IsInRole(RoleNames.Technician))
+                        { <a class="btn btn-outline btn-sm" asp-action="Edit" asp-route-id="@x.Id">Sửa</a> }
+                        @if (User.IsInRole(RoleNames.Manager))
+                        { <form asp-action="Delete" asp-route-id="@x.Id" method="post"><button class="btn btn-danger btn-sm" type="submit" data-confirm="Xóa lịch tiêm này?">Xóa</button></form> }
+                    </div></td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</article>
