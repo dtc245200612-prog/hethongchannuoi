@@ -1,185 +1,186 @@
-# FarmAI ICTU — Hệ thống quản lý chăn nuôi tích hợp AI
+# FARM AI – HỆ THỐNG QUẢN LÝ CHĂN NUÔI TÍCH HỢP AI
 
-Project hoàn chỉnh theo cấu trúc **ASP.NET Core MVC .NET 10**, mở trực tiếp bằng **Visual Studio Community 2026 Insiders** và chạy bằng **Kestrel** (không dùng IIS Express).
+**Mã nguồn học phần / bản demo có giao diện và cơ sở dữ liệu thật**, chuyển thể từ tài liệu “Báo cáo kết thúc học phần” (78 trang, 12/10/2026). Kiến trúc đã được đổi từ **FastAPI + React + PostgreSQL** trong báo cáo sang **ASP.NET Core MVC + Razor + EF Core + SQL Server** theo yêu cầu. Vì vậy đây là hiện thực hóa C# theo nghiệp vụ của báo cáo, **không phải mã Python/React gốc**.
 
-## 1. Chức năng đã hoàn thiện
+## Mở trong Visual Studio Community 2026 Insiders
 
-- Đăng nhập và phân quyền 3 vai trò: **Quản lý / Kỹ thuật viên / Nhân viên**.
-- CRUD đàn vật nuôi và chuồng trại.
-- Nhật ký chăm sóc, lịch chăm sóc sắp tới/quá hạn, đánh dấu trường hợp cần kiểm tra sức khỏe.
-- Lịch vaccine, cảnh báo quá hạn / sắp đến hạn, đánh dấu đã thực hiện.
-- Theo dõi cân nặng và biểu đồ tăng trưởng.
-- Kho thức ăn: tồn kho, mức tối thiểu, nhập / xuất và chống xuất quá tồn.
-- Kho thuốc & vật tư: số lượng, mức tối thiểu, hạn dùng. Không có chức năng kê thuốc.
-- Theo dõi sinh sản.
-- Xuất bán, doanh thu và tự động trừ số lượng đàn.
-- Quản lý chi phí.
-- Báo cáo: tăng trưởng, doanh thu, chi phí, chênh lệch thu-chi, tồn kho thấp, tỷ lệ hao hụt.
-- Trợ lý AI tích hợp trong hệ thống: tóm tắt đàn, nhắc lịch 7 ngày, phân tích tăng trưởng, điểm cần theo dõi.
-- Output OpenAI được ràng buộc bằng JSON schema để frontend parse ổn định.
-- Có endpoint backend `POST /api/ai/summarize-herd` cho luồng tích hợp sâu.
-- Có **Prompt Lab V1/V2/V3** để chạy 3 vòng thử nghiệm trên cùng dữ liệu và ghi log.
-- Nhật ký prompt/phản hồi AI phục vụ minh chứng KT3.
-- Test tự động cho lịch chăm sóc, lịch vaccine, tăng trưởng, xuất bán, tồn kho, tỷ lệ hao hụt và quyền AI.
+1. Giải nén ZIP vào một thư mục dễ truy cập, ví dụ `D:\FarmAI`.
+2. Trong Visual Studio, cài workload **ASP.NET and web development** và **.NET 10 SDK**. Cần SQL Server Express **LocalDB** (thường có thể cài cùng Visual Studio) hoặc SQL Server 2022+.
+3. Chọn **File → Open → Project/Solution** rồi mở `FarmAI.sln` ở thư mục gốc.
+4. Chọn dự án **FarmAI** làm **Startup Project** (không chọn FarmAI.Tests). Chọn profile **FarmAI (Kestrel)**; không dùng IIS Express.
+5. Bấm **Ctrl+F5** hoặc **F5**. Ở chế độ Development, EF Core tự tạo CSDL `FarmAI_DB` nếu chưa có, sau đó seed 3 tài khoản, 2 chuồng, 2 đàn, mẫu cân và 2 tên vaccine giả định.
+6. Truy cập **https://localhost:7105** (hoặc **http://localhost:5105**). Nếu HTTPS dev cert chưa được tin cậy, dùng `dotnet dev-certs https --trust` trong Terminal và chạy lại.
 
-## 2. Cách chạy bằng Visual Studio Community 2026 Insiders
+### Tài khoản mẫu (chỉ cho môi trường Development)
 
-1. Cài workload **ASP.NET and web development** và **.NET 10 SDK**.
-2. Giải nén project.
-3. Mở file `FarmAI.sln`.
-4. Visual Studio sẽ tự Restore NuGet. Nếu chưa restore: chuột phải Solution → **Restore NuGet Packages**.
-5. Chọn project khởi động **FarmAI**.
-6. Trên thanh Run chọn profile **FarmAI** (không chọn IIS Express).
-7. Nhấn `Ctrl + F5` hoặc nút ▶.
-8. Kestrel chạy tại:
-   - `https://localhost:7188`
-   - `http://localhost:5188`
-
-Database SQLite `farmai.db` sẽ tự tạo lần đầu và seed dữ liệu mẫu.
-
-## 3. Tài khoản demo
-
-| Vai trò | Tên đăng nhập | Mật khẩu |
+| Username | Vai trò | Mật khẩu mặc định |
 |---|---|---|
-| Quản lý | `admin` | `admin123` |
-| Kỹ thuật viên | `ktv` | `ktv123` |
-| Nhân viên | `nv` | `nv123` |
+| `quanly` | Quản lý | `FarmAI@2026` |
+| `kythuat` | Kỹ thuật viên | `FarmAI@2026` |
+| `nhanvien` | Nhân viên | `FarmAI@2026` |
 
-Mật khẩu demo được lưu dưới dạng hash trong database, không lưu plaintext.
+**Quan trọng:** đây là mật khẩu công khai để trình diễn trên máy cục bộ, không dùng khi đưa hệ thống lên Internet. Đổi bằng biến môi trường `FarmAI__SeedPassword` **trước lần tạo CSDL đầu tiên**. Các tài khoản cũ không tự đổi mật khẩu khi cấu hình thay đổi; không dùng dữ liệu demo thật.
 
-## 4. Phân quyền
+### Chạy với SQL Server khác LocalDB
 
-- **Quản lý**: toàn quyền nghiệp vụ, tài khoản, chi phí, báo cáo, AI.
-- **Kỹ thuật viên**: cập nhật dữ liệu chuyên môn, vaccine, tăng trưởng, sinh sản, kho; xem báo cáo và sử dụng AI.
-- **Nhân viên**: xem dữ liệu, ghi nhật ký chăm sóc và ghi giao dịch nhập/xuất thức ăn; không gửi dữ liệu sang AI.
+Nếu máy không có LocalDB, mở PowerShell trong thư mục mã nguồn và dùng SQL Server 2022 (cài sẵn hoặc Docker):
 
-## 5. Cấu hình OpenAI API an toàn
+```powershell
+# Tùy chọn: tạo SQL Server trên Docker (phải tạo file .env từ .env.example và thay mật khẩu)
+docker compose -f docker-compose.sqlserver.yml up -d
 
-Project vẫn chạy khi **chưa có API key** bằng chế độ phân tích nội bộ (fallback). Để dùng AI thật, không ghi key vào `appsettings.json` và không commit key lên Git.
-
-### Cách khuyến nghị trong Visual Studio / terminal
-
-```bash
-dotnet user-secrets set "OPENAI_API_KEY" "sk-..." --project FarmAI/FarmAI.csproj
-dotnet user-secrets set "OPENAI_MODEL" "gpt-5.6-luna" --project FarmAI/FarmAI.csproj
+# Đặt connection string an toàn theo cấu hình SQL Server của bạn
+$env:ConnectionStrings__SqlServer = 'Server=localhost,1433;Database=FarmAI_DB;User Id=sa;Password=YOUR_STRONG_PASSWORD;TrustServerCertificate=True'
+$env:ASPNETCORE_ENVIRONMENT = 'Development'
+dotnet restore FarmAI.sln
+dotnet run --project FarmAI/FarmAI.csproj --launch-profile 'FarmAI (Kestrel)'
 ```
 
-Hoặc đặt biến môi trường `OPENAI_API_KEY` và `OPENAI_MODEL`.
+### Chạy nhanh bằng SQLite (tùy chọn để demo, **không phải DB chính**)
 
-Dịch vụ AI gọi Responses API tại `https://api.openai.com/v1/responses`. Model có thể đổi bằng cấu hình mà không sửa code. Kết quả được yêu cầu theo Structured Output/JSON schema gồm `title`, `summary`, `highlights`, `reminders`, `warnings`.
-
-## 6. Cách reset dữ liệu demo
-
-Dừng ứng dụng, xóa file:
-
-```text
-FarmAI/farmai.db
+```powershell
+$env:FarmAI__DbProvider = 'Sqlite'
+$env:ASPNETCORE_ENVIRONMENT = 'Development'
+dotnet run --project FarmAI/FarmAI.csproj --launch-profile 'FarmAI (Kestrel)'
 ```
 
-Sau đó chạy lại. `DatabaseSeeder` sẽ tạo dữ liệu mẫu mới.
+SQL Server là lựa chọn mặc định vì yêu cầu đầu bài chưa chỉ định rõ một lựa chọn trong SQL Server/MySQL/không dùng DB. Bản này **không có adapter MySQL**. Khi dùng SQLite, dữ liệu nằm ở `farm-ai.db` (không đưa vào ZIP).
 
-## 7. Chạy test
+## Sử dụng từng chức năng
 
-Trong Visual Studio: **Test → Run All Tests**.
+- **Trang chủ:** tổng số đàn, số con trong phạm vi, hao hụt ghi nhận, lịch tiêm sắp/quá hạn.
+- **Chuồng:** quản lý tạo chuồng và sửa sức chứa/trạng thái. Không ngừng chuồng đang có con.
+- **Đàn:** tạo hồ sơ + biến động nhập + phân bổ chuồng đồng thời; tra cứu/lọc/phân trang; chuyển toàn đàn; chia sang đàn có sẵn; báo hao hụt/điều chỉnh. Nhân viên gửi biến động để quản lý xác nhận. Chi tiết hiển thị ID đàn đích phục vụ chia đàn.
+- **Nhật ký chăm sóc:** thức ăn, thuốc, theo dõi; giá trống giữ null; bản ghi chờ xác nhận; người nhập không tự duyệt; chi phí duyệt tính bằng decimal.
+- **Cân đo:** số mẫu, tổng kg, phương pháp; bình quân và ADG; khi thiếu phương pháp tương thích không tính ADG.
+- **Sinh sản:** mã tai, cá thể mẹ; sinh sống, chết lưu, số tiếp nhận; tăng đàn kèm biến động trong cùng transaction; khóa chống gửi lại.
+- **Lịch tiêm:** tạo kế hoạch, báo lần thực hiện và kỹ thuật viên xác nhận; chưa duyệt không tính tổng; dời/hủy có lý do, giữ lịch sử audit; worker cập nhật nhắc việc mỗi giờ (và nút cập nhật thủ công).
+- **Xuất bán:** phiếu nhiều dòng nháp, xác nhận và giảm đàn một lần, thanh toán từng phần; doanh số tách khỏi tiền thực thu; chỉ quản lý được truy cập.
+- **Trợ lý chatbot AI:** giao diện chat nổi và trang riêng; trả lời theo dữ liệu đúng quyền; Ollama/OpenAI, nguồn và cảnh báo; không sửa DB.
+- **Báo cáo + AI:** số liệu theo kỳ, ảnh chụp dữ liệu nguồn (snapshot SHA256), bản dự thảo, các source ID, cảnh báo thú y, phê duyệt và audit. AI không có quyền tự sửa CSDL.
+- **Tài khoản:** tạo user, đổi vai trò/kích hoạt, phân công chuồng, audit. Không thể khóa/hạ quyền quản lý cuối cùng.
 
-Hoặc terminal:
+### Bật Ollama cục bộ (AI thật)
 
-```bash
-dotnet test FarmAI.sln
+1. Cài Ollama từ nguồn chính thức và khởi chạy dịch vụ trên `http://localhost:11434`.
+2. Tải một mô hình phù hợp, ví dụ `ollama pull llama3.2:3b` (tên model có thể thay đổi nếu máy chưa có mô hình này).
+3. Trước khi mở ứng dụng, thiết lập biến môi trường trên PowerShell:
+
+```powershell
+$env:AI__BaseUrl = 'http://localhost:11434'
+$env:AI__Model = 'llama3.2:3b'
+# Tùy chọn: API gateway có xác thực sẽ cần bổ sung header qua cấu hình riêng.
 ```
 
-Test nằm trong project `FarmAI.Tests` và tài liệu manual test nằm tại `tests/TEST_CASES.md`.
+4. Mở **Báo cáo & AI → Tạo bản dự thảo**. Nếu model trả đúng schema và source ID, kết quả lưu dạng `OLLAMA` chờ người có thẩm quyền kiểm tra. Nếu **không cấu hình** 2 biến môi trường trên, hệ thống dùng `RULE_BASED` – một bản nhận xét theo quy tắc, **không quảng bá là kết quả từ mô hình AI**. Khi AI lỗi, dữ liệu sản xuất vẫn giữ nguyên.
 
-## 8. Minh chứng Bài kiểm tra thường xuyên 3
+## Chatbot AI trực tiếp (đã bổ sung)
 
-| Tiêu chí | Minh chứng trong project |
-|---|---|
-| 1. AI tích hợp trong hệ thống | `AiController`, trang `Views/Ai/Index.cshtml` |
-| 2. Kết nối API/model & bảo vệ key | `Services/OpenAiService.cs`, User Secrets / env |
-| 3. Prompt tách khỏi code | `FarmAI/Prompts/prompts.json` + JSON schema trong `OpenAiService` |
-| 4. 3 vòng tối ưu prompt | `prompts.v1.json`, `prompts.v2.json`, `prompts.json`, trang `Ai/PromptLab`, `docs/PROMPT_EXPERIMENTS.md` |
-| 5. Dùng dữ liệu hệ thống + quyền | `FarmDataService`, `[Authorize(Roles=...)]` |
-| 6. Kết quả rõ ràng + cảnh báo | giao diện AI chia Summary/Highlights/Reminders/Warnings |
-| 7. Timeout/rate-limit/empty/JSON/long data | `OpenAiService.cs` |
-| 8. Kiểm thử đúng/sai/biên | `FarmAI.Tests`, `tests/TEST_CASES.md` |
-| 9. Review code bằng AI | `docs/AI_CODE_REVIEW.md` |
-| 10. AI gắn với UX nghiệp vụ | AI nằm trong menu, lấy dữ liệu CSDL trực tiếp, có nhật ký và endpoint backend |
+Sau khi đăng nhập, chọn **Trợ lý chatbot AI** ở menu bên trái hoặc bấm **✦ Trợ lý AI** tại góc dưới bên phải trên các trang quản lý. Có câu hỏi gợi ý, gửi Enter, Shift+Enter xuống dòng, xóa hội thoại, hiển thị nguồn dữ liệu, thông báo lỗi và cảnh báo thú y. Không yêu cầu thay đổi CSDL; hỏi đáp **chỉ đọc**.
 
+**Lưu ý:** Mặc định khi chưa cấu hình model, chatbot vẫn trả lời một số câu hỏi cơ bản về dữ liệu bằng **RULE_BASED**, không giả làm mô hình AI. Muốn chatbot trả lời linh hoạt phải bật một trong hai provider:
 
-## 8.1. Prompt Lab V1/V2/V3
+### Cách 1 — Ollama trên máy (miễn phí dùng local model)
 
-Sau khi cấu hình API key, mở **Trợ lý AI → Thử Prompt V1/V2/V3**. Hệ thống sẽ dùng cùng một snapshot dữ liệu và cùng một câu hỏi để chạy ba phiên bản prompt. Ba kết quả được hiển thị cạnh nhau và tự ghi vào `AiLogs`. Đây là phần minh chứng trực tiếp cho tiêu chí tối ưu prompt qua thử nghiệm.
+Mở Ollama, tải model và đặt biến môi trường **trong cửa sổ PowerShell trước khi khởi chạy dự án**:
 
-Nếu chưa cấu hình API key, trang vẫn chạy fallback để kiểm tra luồng nhưng không nên dùng fallback làm bằng chứng đã thử model thật.
-
-## 8.2. Endpoint AI backend
-
-Endpoint tích hợp sâu:
-
-```text
-POST /api/ai/summarize-herd
-Content-Type: application/json
-X-FarmAI-Request: 1
+```powershell
+ollama pull llama3.2:3b
+$env:AI__ChatProvider = 'Ollama'
+$env:AI__ChatModel = 'llama3.2:3b'
+$env:AI__BaseUrl = 'http://localhost:11434'
+dotnet run --project FarmAI/FarmAI.csproj --launch-profile 'FarmAI (Kestrel)'
 ```
 
-Body mẫu:
+`AI__ChatModel` để trống thì chatbot thử dùng `AI__Model` của phân hệ Báo cáo AI cũ. Model và Ollama phải chạy sẵn; model lớn có thể cần RAM nhiều hơn.
 
-```json
-{
-  "task": "summary",
-  "question": "Hãy ưu tiên các việc cần xử lý trong 7 ngày tới."
-}
+### Cách 2 — OpenAI qua API
+
+Không dán khóa vào file JS, HTML, `appsettings.json` hoặc GitHub. Đặt biến môi trường riêng (PowerShell) **trên máy chủ**:
+
+```powershell
+$env:AI__ChatProvider = 'OpenAI'
+$env:AI__ChatModel = 'gpt-4o-mini'
+$env:OPENAI_API_KEY = 'PASTE_YOUR_KEY_HERE'
+dotnet run --project FarmAI/FarmAI.csproj --launch-profile 'FarmAI (Kestrel)'
 ```
 
-Endpoint yêu cầu người dùng đã đăng nhập với vai trò **Quản lý** hoặc **Kỹ thuật viên**.
+Mẫu `PASTE_YOUR_KEY_HERE` phải thay bằng API key riêng, tuyệt đối không gửi key trong chat hoặc chụp màn hình. OpenAI API có thể phát sinh chi phí theo tài khoản API; gói ChatGPT Plus không tự bao gồm chi phí API. Trên Visual Studio, thiết lập biến môi trường trong **Project Debug settings** hoặc `dotnet user-secrets` (không cam kết ứng dụng đang chạy sẽ tự đọc biến vừa đặt trong cửa sổ terminal khác). **Khởi động lại ứng dụng** sau khi thay cấu hình.
 
-## 9. Cấu trúc thư mục chính
+**Kiểm tra:** vào `/Chat` sau đăng nhập; bên phải hiển thị tình trạng provider. Trả lời thật hiển thị nhãn `OLLAMA`/`OPENAI`; nếu `RULE_BASED` nghĩa là chưa cấu hình model. Nếu gặp lỗi 429, 502, 503, 504 hãy xem thông báo và kiểm tra model/cấu hình, không cần xóa dữ liệu quản lý.
 
-```text
-FarmAI_Complete_NET10/
-├── FarmAI.sln
-├── FarmAI/
-│   ├── Controllers/
-│   ├── Data/
-│   ├── Models/
-│   ├── Services/
-│   ├── Prompts/
-│   ├── Views/
-│   ├── wwwroot/
-│   ├── Program.cs
-│   └── FarmAI.csproj
-├── FarmAI.Tests/
-├── docs/
-└── tests/
+- `Services/ChatContextService.cs`: lấy dữ liệu đàn, lịch tiêm, cân đo, nhật ký **đã lọc theo phân công**.
+- `Services/ChatModelClient.cs`: kết nối AI, giới hạn 30s, kiểm JSON và source ID, giới hạn kích cỡ/nhịp gọi.
+- `Prompts/chat_system_v1/v2/v3.txt`: ba phiên bản prompt phục vụ đối chiếu, v3 được dùng khi chạy app.
+- `scripts/evaluate_chat_prompts.py`: tự chạy 3 vòng x 6 ca trên Ollama cục bộ và xuất bảng kết quả thực nghiệm.
+- `docs/CHATBOT_AI_TIEU_CHI_TX3.md`, `CHATBOT_KIEM_THU.md`, `CHATBOT_REVIEW_AI.md`: đối chiếu đủ 10 tiêu chí, ca test và nhật ký review.
+
+**Quyền dữ liệu:** query chỉ lấy những đàn thuộc chuồng được phân công, tối đa 25 hồ sơ đàn và các bản ghi gần nhất. Tài khoản nhân viên không được đưa dữ liệu bán hàng/khách hàng sang AI. Chat không có công cụ sửa dữ liệu, không lưu hội thoại vào DB. **Chỉ gửi dữ liệu trang trại lên OpenAI khi được phép sử dụng dịch vụ đám mây theo chính sách đơn vị.**
+
+## Cấu trúc mã nguồn
+
+```
+FarmAI.sln                       giải pháp mở bằng Visual Studio
+FarmAI/
+  FarmAI.csproj                  dự án ASP.NET Core MVC net10.0
+  Program.cs                     DI, Kestrel, RBAC, cookies, rate limiting
+  Controllers/                   điều hướng, xác thực, thao tác HTML
+  Models/                        thực thể và mẫu nhập liệu, FarmRules
+  Data/                          EF Core context, seed dữ liệu giả định
+  Services/                      dịch vụ nghiệp vụ, quyền, cảnh báo, AI
+  Views/                         Razor templates theo chức năng
+  Prompts/                       Chatbot system/user prompt V1–V3
+  wwwroot/css/                   CSS responsive 360px+
+  wwwroot/js/                    Trình chat JavaScript an toàn
+  Properties/launchSettings.json  profile Kestrel
+FarmAI.Tests/                     kiểm thử quy tắc tính toán (xUnit)
+docs/                            đối chiếu Use Case và giới hạn
 ```
 
-## 10. Lưu ý AI
+## Kiểm thử
 
-**Khuyến cáo: Kết quả do AI tạo ra chỉ mang tính chất tham khảo, không thay thế cho chỉ định của bác sĩ thú y.**
+Trong Visual Studio: **Test → Run All Tests**. Hoặc:
 
-## 11. Bản sửa giao diện 22/09/2026
+```powershell
+dotnet restore FarmAI.sln
+dotnet build FarmAI.sln -c Debug
+dotnet test FarmAI.sln -c Debug
+```
 
-Bản này đã sửa các lỗi hiển thị được phát hiện khi chạy trên Windows/Chrome với mức scale/zoom lớn:
+Các xUnit test kiểm tra bảo toàn số lượng, âm tồn, tiền/giá, ADG, thay đổi phương pháp, chia cho 0 và các ràng buộc đầu vào/đầu ra chatbot. Kịch bản thao tác tay theo `docs/KIEM_THU.md`. **Tác giả gói nguồn chưa chạy được dotnet build/test ở môi trường tạo gói vì môi trường đó không cài .NET SDK và không truy cập được NuGet; cần chạy ba lệnh trên trên máy bạn trước khi xác nhận đã pass.**
 
-- Chuyển font toàn hệ thống sang `Times New Roman` để hiển thị tiếng Việt ổn định, không còn khoảng trắng lạ giữa ký tự có dấu.
-- Sidebar có vùng cuộn riêng, nền xanh luôn phủ toàn chiều cao màn hình dù menu nhiều mục.
-- Header tiếp tục sticky khi cuộn nội dung.
-- Chống co/vỡ chữ ở tên người dùng, nút Đăng xuất, tiêu đề và các nút AI.
-- Tối ưu responsive cho màn hình desktop 125% Windows scaling / browser zoom.
-- Thay logo placeholder bằng logo ICTU đúng theo giao diện mẫu người dùng cung cấp.
+## Giới hạn và lưu ý bảo mật
 
-## 12. Bản sửa OpenAI bị chậm / trang chờ lâu
+Đây là **bản demo học thuật**, không phải bản production-ready. Không đưa trực tiếp lên Internet hoặc dùng vào quyết định điều trị. Một số yêu cầu từ báo cáo vẫn là **bổ sung khi sản xuất**:
 
-Bản này đã sửa luồng AI sau khi cấu hình API key:
+- Bản ASP.NET MVC dùng cookie có thời hạn 15 phút và session DB, thay vì JWT access + refresh token xoay vòng và hash Argon2id như báo cáo. PasswordHasher ASP.NET Core hiện dùng PBKDF2. Chưa có màn hình đổi mật khẩu, refresh token hoặc một API JWT đầy đủ.
+- DB được khởi tạo bằng `EnsureCreated` **chỉ trong Development**; trước production phải tạo và review **EF Core migrations** (`dotnet ef migrations add InitialCreate --project FarmAI --startup-project FarmAI`) và chạy migrate sau sao lưu. App chủ động từ chối chạy ở Production để tránh tạo CSDL nguy hiểm.
+- Giao diện demo không hỗ trợ tạo đàn đích mới ngay trong thao tác chia đàn, phân trang dài ở mọi module, sửa nhật ký đã duyệt bằng chứng từ điều chỉnh, kiểm tra thời gian ngừng thuốc và đăng ký vaccine chuyên môn.
+- Cảnh báo chạy worker trong tiến trình ứng dụng, không phải cron phân tán. AI dùng một lần gọi giới hạn ~25 giây, chưa có retry phân tán, schema nghiêm ngặt đầy đủ hoặc bộ benchmark 30 ca/ba phiên bản prompt. Kết quả là bản nháp có người kiểm tra.
+- Dashboard chỉ tổng hợp dòng còn trong phạm vi hiện hành; so sánh lịch sử và tỷ lệ hao hụt toàn trang trại cần đối soát tồn đầu kỳ chính xác trong môi trường thực. Không tuyên bố đạt p95, RPO, RTO hay uptime khi chưa đo.
+- Cần thêm HTTPS hợp lệ, rate limit phân tán, vault quản lý bí mật, CSRF/Origin theo topology thật, giám sát, backup ngoài máy, kiểm thử đồng thời trên SQL Server, chứng từ kế toán và chính sách bảo vệ dữ liệu trước khi triển khai thực.
 
-- Trang **Trợ lý AI** gọi `POST /api/ai/summarize-herd` bằng `fetch`, không còn reload toàn bộ trang khi chờ OpenAI.
-- Có trạng thái **Đang phân tích...**, khóa nút chống bấm lặp và hiển thị thời gian phản hồi.
-- Timeout OpenAI giảm còn **18 giây**; nếu quá thời gian hệ thống tự chuyển sang fallback thay vì để giao diện chờ lâu.
-- Trình duyệt có chốt an toàn **25 giây** để dừng request UI nếu kết nối localhost/API bất thường.
-- Giảm snapshot gửi AI xuống tối đa **8.000 ký tự** và output xuống **700 tokens** để giảm độ trễ/chi phí.
-- Gửi `reasoning.effort = none` và `text.verbosity = low` cho tác vụ quản lý ngắn.
-- Phân biệt lỗi HTTP 401/403/400/404/429 và đưa nguyên nhân vào kết quả fallback.
-- Prompt Lab V1/V2/V3 chạy **song song** phần gọi AI, sau đó ghi SQLite tuần tự để tránh `DbContext` bị truy cập đa luồng.
-- Có thêm `FarmAI.slnf` dùng đường dẫn tương đối, có thể di chuyển project sang máy/thư mục khác mà không phụ thuộc thư mục Downloads cũ.
+**Nguồn nghiệp vụ:** tệp báo cáo người dùng cung cấp, phần 1.4, 1.6, bảng 30 UC trang 21–30, ERD và từ điển dữ liệu trang 41–44, AI trang 58–64, kiểm thử trang 65–69. Xem `docs/DOI_CHIEU_UC.md` để phân biệt nội dung đã hiện thực và các khoảng trống.
 
-Nếu AI thật gặp lỗi, hệ thống vẫn trả kết quả **Phân tích nội bộ (fallback)** và trang tiếp tục hoạt động. Không lưu API key trong source code.
+## Phiên bản nâng cấp OpenAI (13/10/2026)
+
+**Xem `docs/CAI_OPENAI_TRONG_VISUAL_STUDIO.md` để bật OpenAI trong Visual Studio.**
+
+- Mặc định ChatProvider / ReportProvider = `OpenAI`, ChatModel / ReportModel = `gpt-4.1-mini` (có thể tùy chỉnh); nếu chưa có khóa mới, chatbot và báo cáo vẫn dùng `RULE_BASED` minh bạch, không giả làm AI.
+- Người dùng phải **thu hồi khóa API đã chia sẻ công khai và tạo khóa mới**, đặt khóa mới trong **Manage User Secrets**. Không có khóa thật hoặc thông tin thanh toán trong ZIP.
+- Chatbot dùng OpenAI Chat Completions API với **Structured Outputs `json_schema` strict**, giới hạn 30 giây, xác minh source_ids ở backend, chống hiển thị HTML từ AI và hạn mức hỏi đáp.
+- Snapshot chatbot mở rộng dữ liệu theo quyền: số lượng tiêm đã được xác nhận, số còn lại, lịch quá hạn trong mẫu truy vấn và so sánh ADG giữa các mẫu cân đủ điều kiện. Các tổng vượt phạm vi lấy mẫu phải có cảnh báo giới hạn.
+- **Báo cáo & AI** có đường kết nối OpenAI riêng với JSON schema, ràng buộc nguồn và dữ liệu thiếu; báo cáo vẫn ở trạng thái DRAFT và cần phê duyệt của người được phân quyền.
+- Không có khả năng dùng API key mới nếu chỉ mở ZIP mà không cài .NET 10, cấu hình SQL Server, nhập khóa và có quota OpenAI Platform. Bản này chưa được chạy dotnet build/test trong container vì không có .NET SDK. Xin chạy các lệnh ở phần **Kiểm thử** trên máy Windows.
+
+
+## Cải thiện giao diện: menu đứng yên khi cuộn trang
+- Header FarmAI luôn nằm phía trên; menu bên trái và nội dung nằm ở hai vùng tách biệt.
+- Khi cuộn chuột trong nội dung bên phải, chỉ phần nội dung di chuyển; menu bên trái giữ nguyên vị trí.
+- Nếu menu dài hơn chiều cao cửa sổ, có thể cuộn menu riêng khi trỏ chuột vào menu.
+- Khi thay đổi CSS mà trình duyệt chưa cập nhật, nhấn `Ctrl + F5` để tải lại tài nguyên.
+- File chỉnh: `FarmAI/wwwroot/css/site.css` (đoạn **CỐ ĐỊNH THANH CHỨC NĂNG BÊN TRÁI**).
+
+## Giao diện mới Emerald Harvest (13/10/2026)
+
+Thiết kế FarmAI được làm mới theo cảm hứng **trang trại xanh, công nghệ thông minh**: banner trang trại SVG, dashboard KPI, menu kèm icon và đánh dấu màn hình đang chọn, thẻ AI, bảng/biểu mẫu hiện đại, giao diện responsive. **Giữ nguyên chức năng quản lý và tích hợp OpenAI**. Thanh bên và nội dung cuộn độc lập trên desktop; trên mobile dùng nút menu. Xem `docs/GIAO_DIEN_FARMAI_2026.md` để biết những file đã thay và cách nâng cấp dự án cũ mà không mất cấu hình API key.

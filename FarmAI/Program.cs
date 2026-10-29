@@ -1,67 +1,73 @@
+using System.Globalization;
+using Microsoft.AspNetCore.Authentication;
+using System.Security.Claims;
+using System.Threading.RateLimiting;
 using FarmAI.Data;
+using FarmAI.Models;
 using FarmAI.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
-var builder = WebApplication.CreateBuilder(args);
-
-builder.Services.AddControllersWithViews(options =>
+var builder=WebApplication.CreateBuilder(args);
+var provider=builder.Configuration["FarmAI:DbProvider"]??"SqlServer";
+builder.Services.AddDbContext<FarmDbContext>(o=>
 {
-    options.Filters.Add(new Microsoft.AspNetCore.Mvc.AutoValidateAntiforgeryTokenAttribute());
+    if(string.Equals(provider,"Sqlite",StringComparison.OrdinalIgnoreCase))o.UseSqlite(builder.Configuration.GetConnectionString("Sqlite")??"Data Source=farm-ai.db");
+    else o.UseSqlServer(builder.Configuration.GetConnectionString("SqlServer")??throw new Exception("Missing SQL Server connection"),s=>s.CommandTimeout(30));
 });
-
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-builder.Services
-    .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie(options =>
+builder.Services.AddScoped<AccessScope>();
+builder.Services.AddScoped<FarmService>();
+builder.Services.AddScoped<OperationsService>();
+builder.Services.AddScoped<ReportService>();
+builder.Services.AddScoped<ChatContextService>();
+builder.Services.AddScoped<ChatModelClient>();
+builder.Services.AddScoped<OpenAiReportClient>();
+builder.Services.AddScoped<ChatService>();
+builder.Services.AddHostedService<AlertWorker>();
+builder.Services.AddHttpClient("ollama",c=>c.Timeout=TimeSpan.FromSeconds(25));
+builder.Services.AddHttpClient("farm-chat",c=>c.Timeout=TimeSpan.FromSeconds(32));
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie(o=>
+{
+    o.LoginPath="/Account/Login";o.AccessDeniedPath="/Account/Denied";
+    o.Cookie.Name="FarmAI.Session";o.Cookie.HttpOnly=true;o.Cookie.SameSite=SameSiteMode.Lax;
+    o.Cookie.SecurePolicy=CookieSecurePolicy.SameAsRequest;
+    o.ExpireTimeSpan=TimeSpan.FromMinutes(15);o.SlidingExpiration=false;
+    o.Events.OnValidatePrincipal=async context=>
     {
-        options.LoginPath = "/Account/Login";
-        options.AccessDeniedPath = "/Account/AccessDenied";
-        options.ExpireTimeSpan = TimeSpan.FromHours(8);
-        options.SlidingExpiration = true;
-        options.Cookie.Name = "FarmAI.Auth";
-        options.Cookie.HttpOnly = true;
-        options.Cookie.SameSite = SameSiteMode.Lax;
-        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
-    });
-
+        var db=context.HttpContext.RequestServices.GetRequiredService<FarmDbContext>();
+        var sid=Guid.TryParse(context.Principal?.FindFirstValue("session"),out var value)?value:Guid.Empty;
+        var s=await db.Sessions.FindAsync(sid);
+        var u=s==null?null:await db.Users.FindAsync(s.UserId);
+        if(u==null||!u.Active||s==null||s.RevokedAt!=null||s.ExpiresAt<=DateTime.UtcNow||
+            context.Principal?.FindFirstValue(ClaimTypes.Role)!=u.Role)
+        {
+            context.RejectPrincipal();await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        }
+    };
+});
 builder.Services.AddAuthorization();
-builder.Services.AddHttpClient<IAiService, OpenAiService>();
-builder.Services.AddSingleton<PromptRepository>();
-builder.Services.AddScoped<FarmDataService>();
-
-var app = builder.Build();
-
-if (!app.Environment.IsDevelopment())
+builder.Services.AddControllersWithViews(o=>
 {
-    app.UseExceptionHandler("/Dashboard/Error");
-    app.UseHsts();
+    o.Filters.Add(new Microsoft.AspNetCore.Mvc.AutoValidateAntiforgeryTokenAttribute());
+    o.Filters.Add(new BusinessExceptionFilter());
+});
+builder.Services.AddRateLimiter(o=>
+{
+    o.RejectionStatusCode=429;
+    o.AddPolicy("login",ctx=>RateLimitPartition.GetFixedWindowLimiter(ctx.Connection.RemoteIpAddress?.ToString()??"unknown",_=>
+        new FixedWindowRateLimiterOptions{PermitLimit=8,Window=TimeSpan.FromMinutes(15),QueueLimit=0,AutoReplenishment=true}));
+    o.AddPolicy("ai",ctx=>RateLimitPartition.GetFixedWindowLimiter(ctx.User.FindFirstValue(ClaimTypes.NameIdentifier)??ctx.Connection.RemoteIpAddress?.ToString()??"unknown",_=>
+        new FixedWindowRateLimiterOptions{PermitLimit=8,Window=TimeSpan.FromHours(1),QueueLimit=0,AutoReplenishment=true}));
+});
+var app=builder.Build();
+CultureInfo.DefaultThreadCurrentCulture=CultureInfo.InvariantCulture;
+CultureInfo.DefaultThreadCurrentUICulture=new CultureInfo("vi-VN"); // HTML number inputs submit decimals with dot.
+if(!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Home/Error");app.UseHsts();
 }
-
-app.UseHttpsRedirection();
-app.UseStaticFiles();
-app.UseRouting();
-app.UseAuthentication();
-app.UseAuthorization();
-
-app.MapGet("/health", () => Results.Ok(new
-{
-    status = "ok",
-    app = "FarmAI ICTU",
-    utc = DateTime.UtcNow
-})).AllowAnonymous();
-
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Dashboard}/{action=Index}/{id?}");
-
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await db.Database.EnsureCreatedAsync();
-    await DatabaseSeeder.SeedAsync(db);
-}
-
+app.UseHttpsRedirection();app.UseStaticFiles();app.UseRouting();app.UseAuthentication();app.UseAuthorization();app.UseRateLimiter();
+app.MapControllerRoute("default","{controller=Home}/{action=Index}/{id?}");
+await DemoSeed.InitializeAsync(app.Services,app.Configuration,app.Environment);
 app.Run();

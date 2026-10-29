@@ -1,0 +1,14 @@
+@{ViewData["Title"]="Trợ lý chatbot AI";ViewData["ChatId"]="page";}
+<div class="row between"><div><h1>✦ Trợ lý AI chăn nuôi</h1>
+<p class="lead">Trao đổi bằng tiếng Việt, hỏi về số liệu đàn và cách sử dụng FarmAI.</p></div>
+<a class="btn light" asp-controller="Reports" asp-action="Index">Xem báo cáo AI →</a></div>
+<div class="chat-page-layout"><div class="panel chat-page-panel">
+    <partial name="_ChatInterface" />
+</div><aside class="panel chat-page-help">
+    <h2>Trợ lý có thể hỗ trợ</h2>
+    <p>✓ Tra cứu tổng đàn, số con và lịch tiêm trong phạm vi tài khoản.</p>
+    <p>✓ Hướng dẫn ghi nhật ký, cân đo và xem báo cáo.</p>
+    <p>✓ Trích dẫn nguồn dữ liệu liên quan.</p>
+    <h3>Chế độ AI</h3><p class="note">@ViewBag.AiStatus</p>
+    <p class="subtle">Khi chưa cấu hình Ollama hoặc OpenAI, hệ thống vẫn hỗ trợ bằng quy tắc, có nhãn RULE_BASED. Chatbot không sửa cơ sở dữ liệu và không đưa hướng dẫn điều trị.</p>
+</aside></div>

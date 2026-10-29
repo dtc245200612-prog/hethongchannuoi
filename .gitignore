@@ -1,10 +1,31 @@
+.vs/
 **/bin/
 **/obj/
-.vs/
 *.user
-*.suo
-FarmAI/farmai.db
-FarmAI/farmai.db-shm
-FarmAI/farmai.db-wal
+*.db
+*.db-shm
+*.db-wal
 .env
-secrets.json
+**/appsettings.Production.json
+
+# Local configuration and credentials
+**/.env
+**/.env.local
+**/.env.*.local
+**/appsettings.Development.json
+**/appsettings.Local.json
+**/appsettings.Production.json
+**/secrets.json
+*.pfx
+*.p12
+*.pem
+*.key
+
+# IDE, build, logs, and local databases
+.vscode/.history/
+*.log
+*.sqlite
+*.sqlite3
+*.db-journal
+*.db-shm
+*.db-wal

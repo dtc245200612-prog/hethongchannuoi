@@ -1,101 +1,125 @@
 @using System.Security.Claims
 @{
-    var controller = ViewContext.RouteData.Values["controller"]?.ToString() ?? "Dashboard";
-    var pageTitle = ViewData["Title"]?.ToString() ?? "FarmAI ICTU";
-    var role = User.FindFirstValue(ClaimTypes.Role) ?? RoleNames.Employee;
-    var roleVi = RoleNames.ToVietnamese(role);
-    var fullName = User.Identity?.Name ?? "Người dùng";
-    var initials = string.Concat(fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).TakeLast(2).Select(x => char.ToUpperInvariant(x[0])));
-    string Active(string name) => string.Equals(controller, name, StringComparison.OrdinalIgnoreCase) ? "active" : "";
+    var activeController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "Home";
+    var signedIn = User.Identity?.IsAuthenticated == true;
+    var role = User.FindFirst(ClaimTypes.Role)?.Value ?? "";
+    var roleLabel = role switch { "MANAGER" => "Quản lý", "TECHNICIAN" => "Kỹ thuật viên", "EMPLOYEE" => "Nhân viên", _ => role };
+    var displayName = User.Identity?.Name ?? "Khách";
+    var initials = displayName.Length > 0 ? displayName[..1].ToUpperInvariant() : "F";
 }
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="FarmAI ICTU - Hệ thống quản lý chăn nuôi tích hợp AI" />
-    <title>@pageTitle | FarmAI ICTU</title>
-    <link rel="icon" type="image/png" href="~/assets/logo-ictu.png" />
-    <link rel="stylesheet" href="~/css/app.css" asp-append-version="true" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#0e5645" />
+    <meta name="description" content="FarmAI – hệ thống quản lý chăn nuôi tích hợp trí tuệ nhân tạo." />
+    <title>@(ViewData["Title"] ?? "Trang chủ") · FarmAI</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
-<body>
-    <div class="app">
-        <aside class="sidebar">
-            <div class="brand">
-                <img src="~/assets/logo-ictu.png" alt="Logo ICTU" />
-                <div><strong>FarmAI</strong><small>ICTU • AIA331</small></div>
+<body class="@(signedIn ? "app-authenticated" : "app-guest")">
+    <svg class="icon-sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+        <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.6"/><rect x="14" y="3" width="7" height="7" rx="1.6"/><rect x="3" y="14" width="7" height="7" rx="1.6"/><rect x="14" y="14" width="7" height="7" rx="1.6"/></symbol>
+        <symbol id="i-barn" viewBox="0 0 24 24"><path d="M3 21V10l9-7 9 7v11M3 10l9-7 9 7"/><path d="M8 21v-8h8v8M8 16h8"/></symbol>
+        <symbol id="i-herd" viewBox="0 0 24 24"><path d="M7 8V5l3 2.3M17 8V5l-3 2.3"/><path d="M5 11c0-3 2.8-5 7-5s7 2 7 5v3c0 4-3.1 7-7 7s-7-3-7-7v-3Z"/><path d="M9 13h.01M15 13h.01M10 17c1.2 1 2.8 1 4 0"/></symbol>
+        <symbol id="i-care" viewBox="0 0 24 24"><path d="M4 20h16M7 16V6l5-3 5 3v10M7 10h10M12 7v7M9 11h6"/><path d="M5 16h14v4H5z"/></symbol>
+        <symbol id="i-trend" viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-9M15 6h6v6"/><path d="M3 21h18"/></symbol>
+        <symbol id="i-heart" viewBox="0 0 24 24"><path d="M20.6 5.5a5.1 5.1 0 0 0-7.2 0L12 7l-1.4-1.5a5.1 5.1 0 0 0-7.2 7.2L12 21l8.6-8.3a5.1 5.1 0 0 0 0-7.2Z"/></symbol>
+        <symbol id="i-vaccine" viewBox="0 0 24 24"><path d="m8 14 6-6M12 5l7 7M14 3l7 7M6 16l3 3M4 20l2-4 3 3-4 2"/><path d="M9 9l6 6"/></symbol>
+        <symbol id="i-sale" viewBox="0 0 24 24"><path d="M3 7h18l-2 12H5L3 7ZM2 7l3-4h14l3 4M9 11v4M15 11v4"/></symbol>
+        <symbol id="i-report" viewBox="0 0 24 24"><path d="M5 3h10l4 4v14H5zM15 3v5h4"/><path d="M8 17v-3M12 17v-6M16 17v-4"/></symbol>
+        <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="m12 2 2.3 7.7L22 12l-7.7 2.3L12 22l-2.3-7.7L2 12l7.7-2.3L12 2ZM19 2v4M17 4h4"/></symbol>
+        <symbol id="i-settings" viewBox="0 0 24 24"><path d="M12 3l1.6 2.5 3-.2.7 3 2.8 1-.7 3 1.7 2.5-2.4 2.1-.3 3-3-.1L12 22l-2.4-2.2-3 .1-.3-3-2.4-2.1 1.7-2.5-.7-3 2.8-1 .7-3 3 .2L12 3Z"/><circle cx="12" cy="12.5" r="3"/></symbol>
+        <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+        <symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M4 12h16m-7-7 7 7-7 7"/></symbol>
+        <symbol id="i-logout" viewBox="0 0 24 24"><path d="M10 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h5M15 7l5 5-5 5M20 12H9"/></symbol>
+        <symbol id="i-leaf" viewBox="0 0 24 24"><path d="M21 3c-9 0-16 4-16 12a6 6 0 0 0 6 6c8 0 12-7 10-18ZM4 21c3-6 7-10 13-13"/></symbol>
+    </svg>
+
+    <a class="skip-link" href="#main-content">Bỏ qua menu đến nội dung</a>
+    <header class="topbar">
+        <div class="topbar-start">
+            @if(signedIn)
+            {
+                <button class="menu-toggle" type="button" data-menu-toggle aria-label="Mở menu điều hướng" aria-controls="farm-sidebar" aria-expanded="false">
+                    <svg class="icon"><use href="#i-menu"></use></svg>
+                </button>
+            }
+            <a class="brand" asp-controller="Home" asp-action="Index" aria-label="FarmAI – về trang chủ">
+                <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none"><path d="M6 24 24 9l18 15v16H6V24Z" fill="#E7F7E6"/><path d="M5 24 24 9l19 15" stroke="#E7F7E6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M18 40V26h12v14" fill="#8BD7A8"/><path d="M24 16v-8" stroke="#E9EFAA" stroke-width="3" stroke-linecap="round"/><path d="M13 19C11 13 7 12 5 13c0 5 3 8 8 8M35 19c2-6 6-7 8-6 0 5-3 8-8 8" fill="#BEE5AF"/></svg></span>
+                <span class="brand-name">Farm<span>AI</span><small>SMART FARM MANAGEMENT</small></span>
+            </a>
+            @if(signedIn){<span class="topbar-divider" aria-hidden="true"></span><span class="topbar-context">Không gian quản lý trang trại</span>}
+        </div>
+        @if(signedIn)
+        {
+            <div class="userbar">
+                <span class="online-indicator" title="Đang truy cập"><span class="online-dot"></span> Hệ thống FarmAI</span>
+                <div class="user-avatar" aria-hidden="true">@initials</div>
+                <div class="user-details"><strong>@displayName</strong><small>@roleLabel</small></div>
+                <form asp-controller="Account" asp-action="Logout" method="post" class="inline"><button type="submit" class="logout-button" title="Đăng xuất"><svg class="icon"><use href="#i-logout"></use></svg><span>Đăng xuất</span></button></form>
             </div>
-            <nav class="nav">
-                <a class="nav-item @Active("Dashboard")" asp-controller="Dashboard" asp-action="Index"><span>▦</span>Tổng quan</a>
-                <a class="nav-item @Active("Herds")" asp-controller="Herds" asp-action="Index"><span>🐄</span>Đàn vật nuôi</a>
-                <a class="nav-item @Active("Barns")" asp-controller="Barns" asp-action="Index"><span>▤</span>Chuồng trại</a>
-                <a class="nav-item @Active("CareLogs")" asp-controller="CareLogs" asp-action="Index"><span>📝</span>Nhật ký chăm sóc</a>
-                <a class="nav-item @Active("Vaccines")" asp-controller="Vaccines" asp-action="Index"><span>💉</span>Tiêm phòng</a>
-                <a class="nav-item @Active("Growth")" asp-controller="Growth" asp-action="Index"><span>📈</span>Tăng trưởng</a>
-                <a class="nav-item @Active("Feed")" asp-controller="Feed" asp-action="Index"><span>🌾</span>Thức ăn & kho</a>
-                <a class="nav-item @Active("Reproduction")" asp-controller="Reproduction" asp-action="Index"><span>🧬</span>Sinh sản</a>
-                <a class="nav-item @Active("Sales")" asp-controller="Sales" asp-action="Index"><span>💰</span>Xuất bán & doanh thu</a>
-                @if (User.IsInRole(RoleNames.Manager))
+        }
+        else { <span class="guest-topnote">Nông nghiệp thông minh · Dữ liệu đáng tin cậy</span> }
+    </header>
+
+    <div class="shell">
+        @if(signedIn)
+        {
+            <div class="sidebar-overlay" data-sidebar-overlay hidden></div>
+            <nav id="farm-sidebar" class="sidebar" aria-label="Chức năng chính">
+                <div class="sidebar-section-title">TỔNG QUAN</div>
+                <a class="nav-link @(activeController == "Home" ? "is-active" : "")" asp-controller="Home" asp-action="Index" aria-current="@(activeController == "Home" ? "page" : null)" title="Trang chủ"><svg class="nav-icon"><use href="#i-grid"></use></svg><span class="nav-label">Trang chủ</span></a>
+                <div class="sidebar-section-title">VẬN HÀNH TRANG TRẠI</div>
+                <a class="nav-link @(activeController == "Barns" ? "is-active" : "")" asp-controller="Barns" asp-action="Index" aria-current="@(activeController == "Barns" ? "page" : null)" title="Quản lý chuồng"><svg class="nav-icon"><use href="#i-barn"></use></svg><span class="nav-label">Quản lý chuồng</span></a>
+                <a class="nav-link @(activeController == "Herds" ? "is-active" : "")" asp-controller="Herds" asp-action="Index" aria-current="@(activeController == "Herds" ? "page" : null)" title="Quản lý đàn"><svg class="nav-icon"><use href="#i-herd"></use></svg><span class="nav-label">Quản lý đàn</span></a>
+                <a class="nav-link @(activeController == "Care" ? "is-active" : "")" asp-controller="Care" asp-action="Index" aria-current="@(activeController == "Care" ? "page" : null)" title="Nhật ký chăm sóc"><svg class="nav-icon"><use href="#i-care"></use></svg><span class="nav-label">Nhật ký chăm sóc</span></a>
+                <a class="nav-link @(activeController == "Growth" ? "is-active" : "")" asp-controller="Growth" asp-action="Index" aria-current="@(activeController == "Growth" ? "page" : null)" title="Cân đo và tăng trưởng"><svg class="nav-icon"><use href="#i-trend"></use></svg><span class="nav-label">Cân đo, tăng trưởng</span></a>
+                <a class="nav-link @(activeController == "Reproduction" ? "is-active" : "")" asp-controller="Reproduction" asp-action="Index" aria-current="@(activeController == "Reproduction" ? "page" : null)" title="Sinh sản"><svg class="nav-icon"><use href="#i-heart"></use></svg><span class="nav-label">Sinh sản</span></a>
+                <a class="nav-link @(activeController == "Vaccinations" ? "is-active" : "")" asp-controller="Vaccinations" asp-action="Index" aria-current="@(activeController == "Vaccinations" ? "page" : null)" title="Lịch tiêm, cảnh báo"><svg class="nav-icon"><use href="#i-vaccine"></use></svg><span class="nav-label">Lịch tiêm, cảnh báo</span></a>
+                @if(User.IsInRole(Roles.Manager))
                 {
-                    <a class="nav-item @Active("Expenses")" asp-controller="Expenses" asp-action="Index"><span>🧾</span>Chi phí</a>
+                    <a class="nav-link @(activeController == "Sales" ? "is-active" : "")" asp-controller="Sales" asp-action="Index" aria-current="@(activeController == "Sales" ? "page" : null)" title="Xuất bán, thanh toán"><svg class="nav-icon"><use href="#i-sale"></use></svg><span class="nav-label">Xuất bán, thanh toán</span></a>
                 }
-                @if (User.IsInRole(RoleNames.Manager) || User.IsInRole(RoleNames.Technician))
+                <div class="sidebar-section-title">THÔNG MINH & BÁO CÁO</div>
+                <a class="nav-link @(activeController == "Reports" ? "is-active" : "")" asp-controller="Reports" asp-action="Index" aria-current="@(activeController == "Reports" ? "page" : null)" title="Báo cáo và AI"><svg class="nav-icon"><use href="#i-report"></use></svg><span class="nav-label">Báo cáo và AI</span></a>
+                <a class="nav-link nav-ai @(activeController == "Chat" ? "is-active" : "")" asp-controller="Chat" asp-action="Index" aria-current="@(activeController == "Chat" ? "page" : null)" title="Trợ lý chatbot AI"><svg class="nav-icon"><use href="#i-sparkles"></use></svg><span class="nav-label">Trợ lý chatbot AI</span><span class="nav-new">AI</span></a>
+                @if(User.IsInRole(Roles.Manager))
                 {
-                    <a class="nav-item @Active("Reports")" asp-controller="Reports" asp-action="Index"><span>📊</span>Báo cáo</a>
-                    <a class="nav-item ai-nav @Active("Ai")" asp-controller="Ai" asp-action="Index"><span>✨</span>Trợ lý AI</a>
+                    <div class="sidebar-section-title">QUẢN TRỊ</div>
+                    <a class="nav-link @(activeController == "Admin" ? "is-active" : "")" asp-controller="Admin" asp-action="Index" aria-current="@(activeController == "Admin" ? "page" : null)" title="Tài khoản và quyền"><svg class="nav-icon"><use href="#i-settings"></use></svg><span class="nav-label">Tài khoản & quyền</span></a>
                 }
-                @if (User.IsInRole(RoleNames.Manager))
-                {
-                    <a class="nav-item @Active("Users")" asp-controller="Users" asp-action="Index"><span>👥</span>Tài khoản</a>
-                }
+                <div class="sidebar-promo">
+                    <div class="promo-icon"><svg class="icon"><use href="#i-leaf"></use></svg></div>
+                    <strong>Nuôi dưỡng tương lai xanh</strong>
+                    <p>Quản lý tinh gọn, tăng trưởng bền vững cùng FarmAI.</p>
+                    <a asp-controller="Chat" asp-action="Index">Khám phá trợ lý AI <svg class="icon"><use href="#i-arrow-right"></use></svg></a>
+                </div>
+                <div class="sidebar-foot"><span class="sidebar-foot-dot"></span> FarmAI · Phiên bản đồ án</div>
             </nav>
-            <div class="sidebar-footer">
-                @if (User.IsInRole(RoleNames.Manager))
-                {
-                    <form asp-controller="Dashboard" asp-action="ResetDemo" method="post">
-                        <button class="btn btn-ghost btn-block" type="submit" data-confirm="Khôi phục dữ liệu mẫu sẽ xóa toàn bộ dữ liệu hiện tại. Tiếp tục?">Khôi phục dữ liệu mẫu</button>
-                    </form>
-                }
-                <small>ASP.NET Core MVC • .NET 10</small>
-                <small>FarmAI ICTU • 2026</small>
-            </div>
-        </aside>
-        <div class="sidebar-backdrop"></div>
-
-        <main class="main">
-            <header class="topbar">
-                <div class="topbar-title">
-                    <button class="btn btn-ghost mobile-menu" type="button" data-menu-toggle>☰</button>
-                    <div>
-                        <p class="eyebrow">HỆ THỐNG QUẢN LÝ CHĂN NUÔI TÍCH HỢP AI</p>
-                        <h2>@pageTitle</h2>
-                    </div>
-                </div>
-                <div class="user-box">
-                    <div class="avatar">@initials</div>
-                    <div><strong>@fullName</strong><small>@roleVi</small></div>
-                    <form asp-controller="Account" asp-action="Logout" method="post">
-                        <button class="btn btn-ghost" type="submit">Đăng xuất</button>
-                    </form>
-                </div>
-            </header>
-
-            @if (TempData["Success"] is string success)
-            {
-                <div class="alert alert-success">@success</div>
-            }
-            @if (TempData["Error"] is string error)
-            {
-                <div class="alert alert-danger">@error</div>
-            }
-
-            <div class="content-shell">
-                @RenderBody()
-            </div>
+        }
+        <main class="main" id="main-content" tabindex="-1">
+            @if(TempData["Success"] is string success) { <div role="status" class="alert success">✓ @success</div> }
+            @if(TempData["Error"] is string error) { <div role="alert" class="alert error">⚠ @error</div> }
+            @RenderBody()
+            <footer class="page-footer"><span>© @DateTime.Now.Year FarmAI · Nền tảng quản lý chăn nuôi thông minh</span><span> Dữ liệu demo · Không dùng để quyết định điều trị</span></footer>
         </main>
     </div>
 
-    <script src="~/js/site.js" asp-append-version="true"></script>
-    @await RenderSectionAsync("Scripts", required: false)
+    @if(signedIn && !(activeController.Equals("Chat", StringComparison.OrdinalIgnoreCase)))
+    {
+        <div class="chat-widget">
+            <button type="button" class="chat-launcher" data-chat-launcher aria-controls="farmai-chat-dock" aria-expanded="false"><svg class="icon"><use href="#i-sparkles"></use></svg><span>Hỏi trợ lý AI</span><span class="chat-launcher-dot"></span></button>
+            <div id="farmai-chat-dock" class="chat-dock" data-chat-dock hidden>
+                <div class="chat-dock-bar"><span class="chat-dock-heading"><svg class="icon"><use href="#i-sparkles"></use></svg><strong>Trò chuyện với FarmAI</strong></span><button type="button" class="chat-close" data-chat-close aria-label="Đóng trò chuyện">×</button></div>
+                @{ViewData["ChatId"] = "dock";}
+                <partial name="_ChatInterface" />
+                <a asp-controller="Chat" asp-action="Index" class="chat-full-link">Mở trang trò chuyện đầy đủ →</a>
+            </div>
+        </div>
+    }
+    <script src="~/js/chat.js" asp-append-version="true" defer></script>
+    <script src="~/js/layout.js" asp-append-version="true" defer></script>
+    @await RenderSectionAsync("Scripts", required:false)
 </body>
 </html>

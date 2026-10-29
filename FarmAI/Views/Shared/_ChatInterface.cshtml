@@ -1,0 +1,22 @@
+@{var chatId=ViewData["ChatId"]?.ToString()??"main";}
+<section class="chat-interface" data-chat-root>
+    <div class="chat-intro"><span class="chat-ai-icon" aria-hidden="true">✦</span>
+      <div><strong>FarmAI Assistant</strong><div class="chat-intro-sub">Tra cứu dữ liệu · Hướng dẫn sử dụng · AI có kiểm soát</div></div>
+    </div>
+    <div class="chat-messages" data-chat-messages role="log" aria-live="polite" aria-relevant="additions">
+        <div class="chat-bubble chat-bot">Xin chào! Tôi là trợ lý FarmAI. Bạn có thể hỏi về số lượng đàn, lịch tiêm, tăng trưởng hoặc cách dùng phần mềm. Câu trả lời chỉ dùng dữ liệu bạn được quyền xem.</div>
+    </div>
+    <div class="chat-prompts" aria-label="Câu hỏi gợi ý">
+        <button type="button" class="chat-suggestion" data-chat-question="Hiện có bao nhiêu đàn và bao nhiêu con?">🐄 Tổng đàn</button>
+        <button type="button" class="chat-suggestion" data-chat-question="Lịch tiêm nào đang cần theo dõi?">💉 Lịch tiêm</button>
+        <button type="button" class="chat-suggestion" data-chat-question="Tôi xem kết quả cân và tăng trưởng ở đâu?">📈 Cân đo</button>
+    </div>
+    <form class="chat-form" asp-controller="Chat" asp-action="Ask" method="post" data-chat-form>
+        <label class="chat-label" for="chat-q-@chatId">Nhập câu hỏi</label>
+        <textarea id="chat-q-@chatId" name="question" data-chat-input rows="2" maxlength="800" placeholder="Ví dụ: Hiện có bao nhiêu con?" required></textarea>
+        <div class="chat-controls"><button type="button" class="btn light" data-chat-reset>Xóa hội thoại</button>
+          <button type="submit" data-chat-send>Gửi câu hỏi ➤</button></div>
+    </form>
+    <p class="chat-status" data-chat-status role="status">Chỉ dữ liệu trong phạm vi quyền truy cập được đưa vào mô hình.</p>
+    <p class="chat-advisory">⚠ Khuyến nghị từ AI chỉ mang tính tham khảo, không thay thế cho bác sĩ thú y.</p>
+</section>

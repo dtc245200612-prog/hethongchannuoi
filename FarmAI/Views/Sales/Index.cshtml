@@ -1,25 +1,4 @@
-@model List<SaleRecord>
-@{
-    ViewData["Title"] = "Xuất bán & doanh thu";
-    var total = Model.Sum(x => x.TotalAmount);
-}
-<div class="page-toolbar">
-    <div><p class="eyebrow">KINH DOANH</p><h3>Xuất bán & doanh thu</h3></div>
-    @if (User.IsInRole(RoleNames.Manager) || User.IsInRole(RoleNames.Technician))
-    { <a class="btn btn-primary" asp-action="Create">+ Ghi xuất bán</a> }
-</div>
-<div class="metric-grid">
-    <div class="metric"><div class="label">Số giao dịch</div><div class="number">@Model.Count</div></div>
-    <div class="metric"><div class="label">Tổng số con xuất bán</div><div class="number">@Model.Sum(x => x.Quantity).ToString("N0")</div></div>
-    <div class="metric"><div class="label">Tổng doanh thu</div><div class="number">@((total / 1_000_000m).ToString("0.0")) tr</div></div>
-    <div class="metric"><div class="label">Giao dịch gần nhất</div><div class="number" style="font-size:22px">@(Model.FirstOrDefault()?.Date.ToString("d/M/yyyy") ?? "—")</div></div>
-</div>
-<article class="panel"><div class="table-wrap"><table class="data-table">
-<thead><tr><th>Ngày</th><th>Đàn</th><th>Số lượng</th><th>KL TB</th><th>Đơn giá</th><th>Khách hàng</th><th>Doanh thu</th><th></th></tr></thead>
-<tbody>
-@foreach (var x in Model)
-{
-<tr><td>@x.Date.ToString("d/M/yyyy")</td><td><strong>@x.Herd?.Code</strong><br/><span class="muted">@x.Herd?.Name</span></td><td>@x.Quantity</td><td>@x.AverageWeight.ToString("0.##") kg</td><td>@x.UnitPrice.ToString("N0") đ/kg</td><td>@x.Buyer</td><td><strong>@x.TotalAmount.ToString("N0") đ</strong></td>
-<td>@if (User.IsInRole(RoleNames.Manager)) { <form asp-action="Delete" asp-route-id="@x.Id" method="post"><button class="btn btn-danger btn-sm" data-confirm="Xóa giao dịch này? Số lượng đàn sẽ được hoàn lại.">Xóa</button></form> }</td></tr>
-}
-</tbody></table></div></article>
+@{ViewData["Title"]="Xuất bán";var herds=(List<Herd>)ViewBag.Herds;var sales=(List<Sale>)ViewBag.Sales;}
+<h1>Xuất bán và công nợ</h1><p class="lead">Lưu nháp không giảm đàn; chỉ khi xác nhận mới cập nhật số lượng và audit.</p>
+<section class="panel"><h2>Tạo phiếu bán nháp</h2><form asp-action="Create" method="post"><div class="form-grid"><label>Khách hàng<input name="CustomerName" required /></label><label>Đàn<select name="HerdId">@foreach(var h in herds){<option value="@h.Id">@h.Code – còn @h.Quantity con</option>}</select></label><label>Số con<input type="number" name="Quantity" min="1" required /></label><label>Cơ sở tính tiền<select name="Basis"><option value="HEAD">Theo con</option><option value="KG">Theo kg</option></select></label><label>Tổng trọng lượng kg (nếu theo kg)<input type="number" min="0.001" step="0.001" name="WeightKg" /></label><label>Đơn giá (VND)<input type="number" name="UnitPrice" min="1" step="0.01" required /></label></div><button>Tạo phiếu nháp</button></form></section>
+<section class="panel"><h2>Danh sách phiếu bán</h2><div class="table-wrap"><table><thead><tr><th>Khách hàng</th><th>Ngày tạo</th><th>Số dòng</th><th>Thành tiền</th><th>Đã thu</th><th>Trạng thái</th></tr></thead><tbody>@foreach(var s in sales){<tr><td><a asp-action="Details" asp-route-id="@s.Id">@s.CustomerName</a></td><td>@s.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td><td>@s.Lines.Count</td><td>@s.Lines.Sum(l=>l.Amount).ToString("N0") đ</td><td>@s.Payments.Sum(p=>p.Amount).ToString("N0") đ</td><td><span class="pill @(s.Status=="DRAFT"?"warn":"")">@s.Status</span></td></tr>}</tbody></table></div></section>

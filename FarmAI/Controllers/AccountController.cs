@@ -1,77 +1,41 @@
 using System.Security.Claims;
 using FarmAI.Data;
 using FarmAI.Models;
+using FarmAI.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 namespace FarmAI.Controllers;
 
-public class AccountController(AppDbContext db) : Controller
+public class AccountController(FarmDbContext db) : Controller
 {
-    [AllowAnonymous]
-    [HttpGet]
-    public IActionResult Login(string? returnUrl = null)
+    [AllowAnonymous, HttpGet] public IActionResult Login()=>User.Identity?.IsAuthenticated==true?RedirectToAction("Index","Home"):View(new LoginForm());
+    [AllowAnonymous,HttpPost,EnableRateLimiting("login")]
+    public async Task<IActionResult> Login(LoginForm form)
     {
-        if (User.Identity?.IsAuthenticated == true)
-            return RedirectToAction("Index", "Dashboard");
-
-        return View(new LoginViewModel { ReturnUrl = returnUrl });
+        if(!ModelState.IsValid)return View(form);
+        var u=await db.Users.SingleOrDefaultAsync(x=>x.Username==form.Username.Trim());
+        var valid=u!=null && u.Active && new PasswordHasher<AppUser>().VerifyHashedPassword(u,u.PasswordHash,form.Password)!=PasswordVerificationResult.Failed;
+        if(!valid){ModelState.AddModelError("","Sai tên đăng nhập hoặc mật khẩu.");return View(form);}
+        var s=new LoginSession{UserId=u!.Id,ExpiresAt=DateTime.UtcNow.AddMinutes(15)};
+        db.Sessions.Add(s);await db.SaveChangesAsync();
+        var claims=new[]{new Claim(ClaimTypes.NameIdentifier,u.Id.ToString()),new Claim(ClaimTypes.Name,u.Username),new Claim(ClaimTypes.Role,u.Role),new Claim("session",s.Id.ToString())};
+        await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,new ClaimsPrincipal(new ClaimsIdentity(claims,CookieAuthenticationDefaults.AuthenticationScheme)),
+            new AuthenticationProperties{IsPersistent=false,ExpiresUtc=new DateTimeOffset(s.ExpiresAt,TimeSpan.Zero)});
+        return RedirectToAction("Index","Home");
     }
-
-    [AllowAnonymous]
-    [HttpPost]
-    public async Task<IActionResult> Login(LoginViewModel model)
-    {
-        if (!ModelState.IsValid) return View(model);
-
-        var user = await db.Users.FirstOrDefaultAsync(x => x.Username == model.Username && x.IsActive);
-        if (user is null)
-        {
-            ModelState.AddModelError(string.Empty, "Tên đăng nhập hoặc mật khẩu không đúng.");
-            return View(model);
-        }
-
-        var hasher = new PasswordHasher<AppUser>();
-        var result = hasher.VerifyHashedPassword(user, user.PasswordHash, model.Password);
-        if (result == PasswordVerificationResult.Failed)
-        {
-            ModelState.AddModelError(string.Empty, "Tên đăng nhập hoặc mật khẩu không đúng.");
-            return View(model);
-        }
-
-        var claims = new List<Claim>
-        {
-            new(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new(ClaimTypes.Name, user.FullName),
-            new(ClaimTypes.Role, user.Role),
-            new("username", user.Username)
-        };
-
-        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-        await HttpContext.SignInAsync(
-            CookieAuthenticationDefaults.AuthenticationScheme,
-            new ClaimsPrincipal(identity),
-            new AuthenticationProperties { IsPersistent = false });
-
-        if (!string.IsNullOrWhiteSpace(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
-            return LocalRedirect(model.ReturnUrl);
-
-        return RedirectToAction("Index", "Dashboard");
-    }
-
-    [Authorize]
-    [HttpPost]
+    [Authorize,HttpPost]
     public async Task<IActionResult> Logout()
     {
+        var sid=Guid.TryParse(User.FindFirstValue("session"),out var id)?id:Guid.Empty;
+        var session=await db.Sessions.FindAsync(sid);if(session!=null){session.RevokedAt=DateTime.UtcNow;await db.SaveChangesAsync();}
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-        return RedirectToAction(nameof(Login));
+        return RedirectToAction("Login");
     }
-
-    [AllowAnonymous]
-    [HttpGet]
-    public IActionResult AccessDenied() => View();
+    [AllowAnonymous] public IActionResult Denied()=>View();
 }

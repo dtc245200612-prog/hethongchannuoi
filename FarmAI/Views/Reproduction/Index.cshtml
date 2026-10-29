@@ -1,21 +1,5 @@
-@model List<ReproductionRecord>
-@{
-    ViewData["Title"] = "Theo dõi sinh sản";
-}
-<div class="page-toolbar">
-    <div><p class="eyebrow">SINH SẢN</p><h3>Lịch sử & kế hoạch sinh sản</h3></div>
-    @if (User.IsInRole(RoleNames.Manager) || User.IsInRole(RoleNames.Technician))
-    { <a class="btn btn-primary" asp-action="Create">+ Ghi sự kiện</a> }
-</div>
-<article class="panel"><div class="table-wrap"><table class="data-table">
-<thead><tr><th>Ngày</th><th>Đàn</th><th>Sự kiện</th><th>Kết quả</th><th>Ngày dự kiến tiếp theo</th><th>Ghi chú</th><th></th></tr></thead>
-<tbody>
-@foreach (var x in Model)
-{
-<tr><td>@x.Date.ToString("d/M/yyyy")</td><td><strong>@x.Herd?.Code</strong><br/><span class="muted">@x.Herd?.Name</span></td><td>@x.EventType</td><td>@x.Result</td><td>@(x.NextExpectedDate?.ToString("d/M/yyyy") ?? "—")</td><td>@x.Notes</td>
-<td><div class="row-actions">
-@if (User.IsInRole(RoleNames.Manager) || User.IsInRole(RoleNames.Technician)) { <a class="btn btn-outline btn-sm" asp-action="Edit" asp-route-id="@x.Id">Sửa</a> }
-@if (User.IsInRole(RoleNames.Manager)) { <form asp-action="Delete" asp-route-id="@x.Id" method="post"><button class="btn btn-danger btn-sm" data-confirm="Xóa bản ghi sinh sản này?">Xóa</button></form> }
-</div></td></tr>
-}
-</tbody></table></div></article>
+@{ViewData["Title"]="Sinh sản";var herds=(List<Herd>)ViewBag.Herds;var animals=(List<Animal>)ViewBag.Animals;var events=(List<ReproductionEvent>)ViewBag.Events;}
+<h1>Sinh sản và cá thể mẹ</h1><p class="lead">Ghi nhận con sinh sống và số con thực tế tiếp nhận, có khóa chống ghi tăng trùng.</p>
+@if(!User.IsInRole(Roles.Employee)){<div class="grid2"><section class="panel"><h2>Thêm cá thể sinh sản</h2><form asp-action="Animal" method="post"><div class="form-grid"><label>Đàn<select name="HerdId">@foreach(var h in herds){<option value="@h.Id">@h.Code</option>}</select></label><label>Mã tai<input name="Tag" required /></label><label>Giới tính<select name="Sex"><option value="FEMALE">Cái</option><option value="MALE">Đực</option></select></label></div><button>Thêm cá thể</button></form></section>
+<section class="panel"><h2>Ghi sự kiện sinh sản</h2><form asp-action="Birth" method="post"><input type="hidden" name="RequestKey" value="@Guid.NewGuid()"/><div class="form-grid"><label>Cá thể mẹ<select name="MotherId">@foreach(var a in animals.Where(a=>a.Sex=="FEMALE")){<option value="@a.Id">@a.Tag</option>}</select></label><label>Đàn tiếp nhận<select name="TargetHerdId">@foreach(var h in herds){<option value="@h.Id">@h.Code</option>}</select></label><label>Sinh sống<input type="number" min="0" name="LiveBorn" required /></label><label>Chết lưu<input type="number" min="0" name="StillBorn" required /></label><label>Tiếp nhận<input type="number" min="0" name="Accepted" required /></label></div><button>Xác nhận sinh và nhập đàn</button></form></section></div>}
+<section class="panel"><h2>Lịch sử sinh sản</h2><div class="table-wrap"><table><thead><tr><th>Ngày</th><th>Cá thể mẹ</th><th>Đàn tiếp nhận</th><th>Sinh sống</th><th>Chết lưu</th><th>Tiếp nhận</th></tr></thead><tbody>@foreach(var e in events){<tr><td>@e.EventDate</td><td>@(animals.FirstOrDefault(a=>a.Id==e.MotherId)?.Tag ?? "-")</td><td>@(herds.FirstOrDefault(h=>h.Id==e.TargetHerdId)?.Code ?? "-")</td><td>@e.LiveBorn</td><td>@e.StillBorn</td><td>@e.Accepted</td></tr>}</tbody></table></div></section>
